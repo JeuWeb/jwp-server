@@ -1,5 +1,5 @@
-# jwp-server
-JeuWeb Push Server, un service WebSocket pour les créateurs de jeux de la communauté JeuWeb
+# JeuWeb Push Server
+JeuWeb Push Server est un service WebSocket pour les créateurs de jeux de la communauté JeuWeb
 
 Le serveur est écrit en Elixir à l'aide du framework [Phoenix](https://www.phoenixframework.org/). Le service est constitué d'une API HTTP et d'un serveur de WebSocket proposant des canaux nommés.
 
