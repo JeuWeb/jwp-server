@@ -14,19 +14,18 @@ defmodule JwpWeb.Plug.ApiAuth do
   end
 
   def fetch(conn, _config) do
-    resp =
-      with {:ok, token} <- fetch_auth_token(conn),
-           {:ok, credentials} <- decode_token(token),
-           {:ok, user_params} <- decode_credentials(credentials),
-           {:ok, conn} <- Pow.Plug.authenticate_user(conn, user_params) do
-        {conn, Pow.Plug.current_user(conn)}
-      else
-        error ->
-          Logger.error("Invalid api auth: #{inspect(error)}")
-          {conn, nil}
-      end
+    # _config is [mod: JwpWeb.Plug.ApiAuth, plug: JwpWeb.Plug.ApiAuth, otp_app: :jwp]
 
-    resp
+    with {:ok, token} <- fetch_auth_token(conn),
+         {:ok, credentials} <- decode_token(token),
+         {:ok, app_params} <- decode_credentials(credentials),
+         {:ok, user} <- find_by_api_key(app_params) do
+      {conn, user}
+    else
+      error ->
+        Logger.error("Invalid api auth: #{inspect(error)}")
+        {conn, nil}
+    end
   end
 
   defp fetch_auth_token(conn) do
@@ -44,8 +43,15 @@ defmodule JwpWeb.Plug.ApiAuth do
 
   defp decode_credentials(bin) do
     case String.split(bin, ":") do
-      [id, password] -> {:ok, %{"id" => id, "password" => password}}
+      [id, api_key] -> {:ok, %{"id" => id, "api_key" => api_key}}
       _any -> {:error, :invalid_credentials}
+    end
+  end
+
+  defp find_by_api_key(%{"id" => id, "api_key" => api_key}) do
+    case Jwp.Repo.get(Jwp.Apps.App, id) do
+      %{api_key: ^api_key, id: ^id} = app -> {:ok, app}
+      other -> {:error, {:not_found, {id, api_key, other}}}
     end
   end
 end

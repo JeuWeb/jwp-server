@@ -4,9 +4,9 @@ defmodule JwpWeb.PushController do
   import Jwp.History, only: [register_message: 3]
 
   def push_message(conn, %{"channel" => channel, "event" => event, "payload" => payload}) do
-    %{id: user_id} = Pow.Plug.current_user(conn)
+    %{id: app_id} = Pow.Plug.current_user(conn)
 
-    channel = "jwp:#{user_id}:#{channel}"
+    channel = "jwp:#{app_id}:#{channel}"
 
     with {:ok, {^event, payload2}} <- register_message(channel, event, payload),
          :ok <- JwpWeb.Endpoint.broadcast!(channel, event, payload2) do

@@ -23,6 +23,7 @@ defmodule JwpWeb do
 
       import Plug.Conn
       import JwpWeb.Gettext
+      import JwpWeb.Utils.JsonShape
       alias JwpWeb.Router.Helpers, as: Routes
     end
   end

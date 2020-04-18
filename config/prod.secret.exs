@@ -18,7 +18,7 @@ config :jwp, JwpWeb.Endpoint,
   ],
   secret_key_base: secret_key_base
 
-config :my_app, MyAppWeb.Endpoint, live_view: [signing_salt: "SECRET_SALT"]
+config :jwp, MyAppWeb.Endpoint, live_view: [signing_salt: "SECRET_SALT"]
 
 # ## Using releases (Elixir v1.9+)
 #

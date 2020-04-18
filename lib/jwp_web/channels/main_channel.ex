@@ -6,7 +6,7 @@ defmodule JwpWeb.MainChannel do
     IO.inspect(payload, label: "payload")
 
     with {:ok, claim_id, name} <- decode_scope(scope),
-         :ok <- check_user_id(socket, claim_id),
+         :ok <- check_app_id(socket, claim_id),
          :ok <- check_channel(socket, name) do
       Logger.debug("joining '#{name}'")
       # history will send messages to this channel process from a Task
@@ -29,10 +29,10 @@ defmodule JwpWeb.MainChannel do
     end
   end
 
-  defp check_user_id(socket, user_id) do
-    case socket.assigns.user_id do
-      ^user_id -> :ok
-      _ -> {:error, {:cannot_claim, user_id}}
+  defp check_app_id(socket, app_id) do
+    case socket.assigns.app_id do
+      ^app_id -> :ok
+      _ -> {:error, {:cannot_claim, app_id}}
     end
   end
 

@@ -26,8 +26,7 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
-config :jwp, :pow,
-  users_context: Jwp.Apps
+config :jwp, :pow, users_context: Jwp.Apps
 
 config :jwp, Jwp.Repo,
   data_dir: "var/db-#{Mix.env()}",

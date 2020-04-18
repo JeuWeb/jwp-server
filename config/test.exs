@@ -9,4 +9,4 @@ config :jwp, JwpWeb.Endpoint,
 # Print only warnings and errors during test
 config :logger, level: :warn
 
-config :my_app, MyAppWeb.Endpoint, live_view: [signing_salt: "SECRET_SALT"]
+config :jwp, MyAppWeb.Endpoint, live_view: [signing_salt: "SECRET_SALT"]
