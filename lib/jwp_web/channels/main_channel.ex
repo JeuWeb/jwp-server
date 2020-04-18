@@ -20,9 +20,12 @@ defmodule JwpWeb.MainChannel do
   end
 
   defp decode_scope(scope) do
-    with [user_id_str, name] <- String.split(scope, ":"),
-         {claim_id, ""} <- Integer.parse(user_id_str) do
+    IO.inspect(scope, label: "scope")
+
+    with [claim_id, name] <- String.split(scope, ":") do
       {:ok, claim_id, name}
+    else
+      err -> {:error, {:bad_scope, err}}
     end
   end
 

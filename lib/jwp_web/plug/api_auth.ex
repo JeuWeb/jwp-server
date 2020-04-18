@@ -44,7 +44,7 @@ defmodule JwpWeb.Plug.ApiAuth do
 
   defp decode_credentials(bin) do
     case String.split(bin, ":") do
-      [email, password] -> {:ok, %{"email" => email, "password" => password}}
+      [id, password] -> {:ok, %{"id" => id, "password" => password}}
       _any -> {:error, :invalid_credentials}
     end
   end

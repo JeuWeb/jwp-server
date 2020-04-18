@@ -1,15 +1,5 @@
 use Mix.Config
 
-# Configure your database
-config :jwp, Jwp.Repo,
-  username: "jwp_dev",
-  password: "jwp_dev",
-  database: "jwp_dev",
-  hostname: "localhost",
-  port: 8826,
-  show_sensitive_data_on_connection_error: true,
-  pool_size: 10
-
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #

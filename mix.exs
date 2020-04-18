@@ -35,9 +35,6 @@ defmodule Jwp.MixProject do
     [
       {:phoenix, "~> 1.5.0-rc.0", override: true},
       {:phoenix_pubsub, "~> 2.0"},
-      {:phoenix_ecto, "~> 4.0"},
-      {:ecto_sql, "~> 3.1"},
-      {:postgrex, ">= 0.0.0"},
       {:gettext, "~> 0.11"},
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.1"},
@@ -45,6 +42,8 @@ defmodule Jwp.MixProject do
       # App
       {:pow, "~> 1.0.19"},
       {:ex2ms, "~> 1.0"},
+      {:cubdb, "1.0.0-rc.1"},
+      {:uuid, "~> 1.1"},
 
       # Dashboard
       {:phoenix_live_dashboard, "~> 0.1"},

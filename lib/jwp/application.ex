@@ -4,10 +4,10 @@ defmodule Jwp.Application do
   def start(_type, _args) do
     children = [
       {Task.Supervisor, name: Jwp.TaskSup},
-      Jwp.Repo,
       {DynamicSupervisor, strategy: :one_for_one, name: Jwp.History.Sup},
       {Registry, name: Jwp.History.Registry, keys: :unique},
       {Phoenix.PubSub, name: Jwp.PubSub},
+      Jwp.Repo,
       JwpWeb.Endpoint
     ]
 
