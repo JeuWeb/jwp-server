@@ -1,5 +1,5 @@
 defmodule Jwp.Apps.App do
-  defstruct id: nil, email: nil, password: nil, api_key: nil, password_hash: nil
+  defstruct id: nil, email: nil, password: nil, api_key: nil, password_hash: nil, endpoint: nil, webhook_key: nil
 
   def pow_user_id_field, do: :id
 
@@ -9,30 +9,16 @@ defmodule Jwp.Apps.App do
     |> maybe_hash_password()
   end
 
-  def maybe_hash_password(app) do
-    case app do
-      %{password: nil} ->
-        app
-
-      %{password: password} ->
-        app
-        |> Map.put(:password_hash, hash_password(password))
-        |> Map.delete(:password)
-    end
+  def maybe_hash_password(app = %{ password: nil }), do: app
+  def maybe_hash_password(app = %{ password: password }) do
+    app
+    |> Map.put(:password_hash, hash_password(password))
+    |> Map.delete(:password)
   end
 
-  defp hash_password(password) do
-    "todo-hash." <> password
-  end
+  def hash_password(password), do: :crypto.hash(:sha256, password)
 
-  def verify_password(a, b) do
-    verify_password2(a, b)
-    |> IO.inspect(label: "VERIFIED")
-  end
-
-  def verify_password2(%__MODULE__{password_hash: nil}, _), do: false
-  def verify_password2(_, nil), do: false
-
-  def verify_password2(%__MODULE__{password_hash: hashed}, password),
-    do: hash_password(password) == hashed
+  def verify_password(%__MODULE__{password_hash: nil}, _), do: false
+  def verify_password(_, nil), do: false
+  def verify_password(%__MODULE__{password_hash: hashed}, password), do: hash_password(password) == hashed
 end

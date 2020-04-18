@@ -28,3 +28,4 @@ jwp-*.tar
 /priv/static/
 /docker/
 /var/
+.vscode

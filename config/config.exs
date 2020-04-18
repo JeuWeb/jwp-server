@@ -27,10 +27,11 @@ config :logger, :console,
 config :phoenix, :json_library, Jason
 
 config :jwp, :pow,
-  # user: Jwp.Apps.App,
   users_context: Jwp.Apps
 
-config :jwp, Jwp.Repo, data_dir: "var/db-#{Mix.env()}", name: Jwp.Repo
+config :jwp, Jwp.Repo,
+  data_dir: "var/db-#{Mix.env()}",
+  name: Jwp.Repo
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
