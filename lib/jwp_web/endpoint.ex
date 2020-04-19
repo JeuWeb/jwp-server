@@ -10,11 +10,17 @@ defmodule JwpWeb.Endpoint do
     signing_salt: "5AGWCj/w"
   ]
 
+  # Jwp Pub Sub
   socket "/socket", JwpWeb.PubSubSocket,
     websocket: true,
     longpoll: false
 
+  # Dashboard
   socket "/live", Phoenix.LiveView.Socket
+
+  # Console Live View
+  socket "/lv/console", Phoenix.LiveView.Socket,
+    websocket: [connect_info: [session: @session_options]]
 
   # Serve at "/" the static files from "priv/static" directory.
   #

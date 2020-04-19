@@ -1,6 +1,7 @@
 defmodule JwpWeb.Router do
   use JwpWeb, :router
   use Pow.Phoenix.Router
+  import Phoenix.LiveView.Router
 
   pipeline :api do
     plug :accepts, ["json"]
@@ -25,7 +26,7 @@ defmodule JwpWeb.Router do
 
   import Phoenix.LiveDashboard.Router
 
-  pipeline :browser do
+  pipeline :dashboard do
     plug :accepts, ["html"]
     plug :fetch_session
     plug :fetch_flash
@@ -35,8 +36,23 @@ defmodule JwpWeb.Router do
 
   if Mix.env() == :dev do
     scope "/" do
-      pipe_through :browser
+      pipe_through :dashboard
       live_dashboard "/dashboard"
     end
+  end
+
+  # Dev Console
+
+  pipeline :console do
+    plug :accepts, ["html"]
+    plug :fetch_session
+    plug :fetch_flash
+    plug :protect_from_forgery
+    plug :put_secure_browser_headers
+  end
+
+  scope "/", JwpWeb do
+    pipe_through :console
+    live "/console/apps/:app_id", ConsoleLive, layout: {JwpWeb.LayoutView, :console_root}
   end
 end

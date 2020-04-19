@@ -23,6 +23,14 @@ defmodule Jwp.History do
   def via(channel) when is_binary(channel),
     do: {:via, Registry, {@registry, channel}}
 
+  # When registering the process, we will set the app_id as the 
+  # registered value, it will help to fetch all active channels for a 
+  # given app_id
+  def via_reg("jwp:" <> rest = channel) when is_binary(channel) do
+    [app_id, _] = String.split(rest, ":", parts: 2)
+    {:via, Registry, {@registry, channel, app_id}}
+  end
+
   def get_pid!(channel) do
     case Registry.lookup(@registry, channel) do
       [] ->
@@ -39,7 +47,7 @@ defmodule Jwp.History do
   end
 
   def start_link([{:channel, channel}]) do
-    GenServer.start_link(__MODULE__, [channel], name: via(channel))
+    GenServer.start_link(__MODULE__, [channel], name: via_reg(channel))
   end
 
   def register_message(channel, event, payload) do
@@ -76,12 +84,7 @@ defmodule Jwp.History do
 
   def handle_call({:register_message, event, payload}, _from, state) do
     s(tab: tab, msg_id: id) = state
-    time = :erlang.monotonic_time(:millisecond)
-
-    # We do not use :erlang.unique_integer([:monotonic]) because
-    # javascript cannot handle such big integers, and even with
-    # :positive we can have the same ids for different channels
-    # id = :erlang.unique_integer([:monotonic, :positive])
+    time = now()
 
     key = {time, id}
 
@@ -90,7 +93,7 @@ defmodule Jwp.History do
 
     record = {key, event, payload2}
     true = :ets.insert(tab, record)
-    {:reply, {:ok, {event, payload2}}, state}
+    {:reply, {:ok, {event, payload2}}, s(state, msg_id: id + 1)}
   end
 
   @impl true
@@ -105,7 +108,7 @@ defmodule Jwp.History do
   def handle_info(:timeout, s(tab: tab) = state) do
     # @todo cancel purge timer ?
     case :ets.info(tab, :size) do
-      0 -> {:stop, :normal, state}
+      # 0 -> {:stop, :normal, state}
       data -> {:noreply, state}
     end
   end
@@ -120,8 +123,7 @@ defmodule Jwp.History do
   end
 
   defp purge_messages(tab) do
-    now = :erlang.monotonic_time(:millisecond)
-    min_keep = {now - @msg_ttl, 0}
+    min_keep = {now() - @msg_ttl, 0}
 
     match_spec =
       fun do
@@ -132,4 +134,6 @@ defmodule Jwp.History do
     # Logger.debug("Deleted #{count} entries from table")
     :ok
   end
+
+  defp now(), do: :os.system_time(:millisecond)
 end

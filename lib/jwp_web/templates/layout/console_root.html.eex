@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <%= csrf_meta_tag() %>
+    <link rel="stylesheet" href="/css/nprogress.css" />
+    <title>Console</title>
+</head>
+<body>
+    <%= @inner_content %>
+    <script type="text/javascript" src="<%= Routes.static_path(@conn, "/js/console.js") %>"></script>
+</body>
+</html>
