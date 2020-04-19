@@ -33,4 +33,9 @@ defmodule Jwp.Repo do
       found -> found
     end
   end
+
+  def drop() do
+    data_dir = Keyword.fetch!(@conf, :data_dir)
+    File.rm_rf(data_dir)
+  end
 end

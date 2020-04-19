@@ -44,6 +44,7 @@ defmodule Jwp.MixProject do
       {:ex2ms, "~> 1.0"},
       {:cubdb, "1.0.0-rc.1"},
       {:uuid, "~> 1.1"},
+      {:mojito, "~> 0.6.1"},
 
       # Dashboard
       {:phoenix_live_dashboard, "~> 0.1"},

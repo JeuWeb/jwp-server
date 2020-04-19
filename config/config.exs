@@ -29,7 +29,7 @@ config :phoenix, :json_library, Jason
 config :jwp, :pow, users_context: Jwp.Apps
 
 config :jwp, Jwp.Repo,
-  data_dir: "var/db-#{Mix.env()}",
+  data_dir: Path.join(File.cwd!, "var/db-#{Mix.env()}"),
   name: Jwp.Repo
 
 # Import environment specific config. This must remain at the bottom

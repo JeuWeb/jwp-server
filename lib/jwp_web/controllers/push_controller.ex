@@ -19,13 +19,13 @@ defmodule JwpWeb.PushController do
 
         conn
         |> put_status(500)
-        |> json(%{status: "error"})
+        |> json(%{status: "error", error: %{code: 500, message: "server error"}})
     end
   end
 
   def push_message(conn, _) do
     conn
     |> put_status(400)
-    |> json(%{status: "error", error: "Missing data"})
+    |> json(%{status: "error", error: %{code: 400, message: "Missing data"}})
   end
 end
