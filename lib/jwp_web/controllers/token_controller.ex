@@ -52,8 +52,8 @@ defmodule JwpWeb.TokenController do
   # @defaults %{
   #   presence_track: false,
   #   presence_diffs: false,
-  #   webhook_join: false,
-  #   webhook_leave: false
+  #   notify_joins: false,
+  #   notifiy_leaves: false
   # }
 
   # defp normalize_conf(conf) when is_map(conf) do
