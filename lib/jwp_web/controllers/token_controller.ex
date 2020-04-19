@@ -1,5 +1,6 @@
 defmodule JwpWeb.TokenController do
   use JwpWeb, :controller
+  require Logger
 
   def auth_socket(conn, params) do
     %{id: app_id} = Pow.Plug.current_user(conn)
@@ -16,6 +17,7 @@ defmodule JwpWeb.TokenController do
         send_json_error(conn, 400, "bad_socket_id", socket_id_raw)
 
       {:error, reason} ->
+        Logger.warn("Replied error: #{inspect(reason)}")
         send_json_error(conn, 400, "bad_config", Jwp.ChannelConfig.expand_error(reason))
     end
   end
