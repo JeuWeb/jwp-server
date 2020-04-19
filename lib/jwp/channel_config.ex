@@ -4,8 +4,8 @@ defmodule Jwp.ChannelConfig do
   @ext_keys [
     "presence_track",
     "presence_diffs",
-    "webhook_join",
-    "webhook_leave",
+    "notify_joins",
+    "notify_leaves",
     "meta"
   ]
   ## Channel config record
@@ -15,8 +15,8 @@ defmodule Jwp.ChannelConfig do
   Record.defrecord(:cc,
     presence_track: false,
     presence_diffs: false,
-    webhook_join: false,
-    webhook_leave: false,
+    notify_joins: false,
+    notify_leaves: false,
     meta: %{}
   )
 
@@ -35,19 +35,19 @@ defmodule Jwp.ChannelConfig do
   defp from_kw([{"presence_diffs", val} | kw], acc) when is_boolean(val),
     do: from_kw(kw, cc(acc, presence_diffs: val))
 
-  defp from_kw([{"webhook_join", val} | kw], acc) when is_boolean(val),
-    do: from_kw(kw, cc(acc, webhook_join: val))
+  defp from_kw([{"notify_joins", val} | kw], acc) when is_boolean(val),
+    do: from_kw(kw, cc(acc, notify_joins: val))
 
-  defp from_kw([{"webhook_leave", val} | kw], acc) when is_boolean(val),
-    do: from_kw(kw, cc(acc, webhook_leave: val))
+  defp from_kw([{"notify_leaves", val} | kw], acc) when is_boolean(val),
+    do: from_kw(kw, cc(acc, notify_leaves: val))
 
   defp from_kw([{"meta", val} | kw], acc) when is_map(val),
     do: from_kw(kw, cc(acc, meta: val))
 
-  defp from_kw([{key, val} | kw], _) when key in @ext_keys,
+  defp from_kw([{key, val} | _kw], _) when key in @ext_keys,
     do: {:error, {:bad_value, {key, val}}}
 
-  defp from_kw([{bad_key, _} | kw], _),
+  defp from_kw([{bad_key, _} | _kw], _),
     do: {:error, {:bad_key, bad_key}}
 
   defp from_kw([], acc),
@@ -66,17 +66,17 @@ defmodule Jwp.ChannelConfig do
         cc(
           presence_track: pt,
           presence_diffs: pd,
-          webhook_join: wj,
-          webhook_leave: wl,
+          notify_joins: wj,
+          notify_leaves: wl,
           meta: m
         )
       ) do
     """
-    #ChannelConfig< 
+    #ChannelConfig<
       presence_track: #{pt}
       presence_diffs: #{pd}
-      webhook_join: #{wj}
-      webhook_leave: #{wl}
+      notify_joins: #{wj}
+      notify_leaves: #{wl}
       meta: #{inspect(m, pretty: true)}
     >
     """

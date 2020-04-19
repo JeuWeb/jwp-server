@@ -1,5 +1,5 @@
 defmodule Jwp.Apps.App do
-  defstruct id: nil, email: nil, password: nil, api_key: nil, password_hash: nil, endpoint: nil, webhook_key: nil
+  defstruct id: nil, email: nil, password: nil, api_key: nil, password_hash: nil, webhooks_endpoint: nil, webhooks_key: nil
 
   def pow_user_id_field, do: :id
 
