@@ -71,5 +71,5 @@ defmodule JwpWeb.TokenController do
   # user id can be nil, the socked will be anonymous
   defp check_socket_id(nil), do: {:ok, nil}
   defp check_socket_id(bin) when is_binary(bin), do: {:ok, bin}
-  defp check_socket_id(other), do: {:error, :bad_socket_id}
+  defp check_socket_id(_other), do: {:error, :bad_socket_id}
 end

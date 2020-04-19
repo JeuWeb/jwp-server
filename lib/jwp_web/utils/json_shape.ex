@@ -27,15 +27,15 @@ defmodule JwpWeb.Utils.JsonShape do
 
   def send_json_error(conn, status, message, detail)
       when is_integer(status) or is_atom(status) do
-    json = wrap_json_error(message, detail)
+    json = wrap_json_error(message, status, detail)
 
     conn
     |> Plug.Conn.put_status(status)
     |> Phoenix.Controller.json(json)
   end
 
-  def wrap_json_error(message, detail),
-    do: %{status: "error", error: to_json_error(message, detail)}
+  def wrap_json_error(message, status, detail),
+    do: %{status: "error", error: Map.put(to_json_error(message, detail), :code, status)}
 
   def to_json_error(error, detail \\ @default_detail)
 

@@ -10,22 +10,15 @@ defmodule JwpWeb.PushController do
 
     with {:ok, {^event, payload2}} <- register_message(channel, event, payload),
          :ok <- JwpWeb.Endpoint.broadcast!(channel, event, payload2) do
-      conn
-      |> put_status(201)
-      |> json(%{status: "ok"})
+      send_json_ok(conn, 201, %{})
     else
       err ->
         Logger.error(inspect(err))
-
-        conn
-        |> put_status(500)
-        |> json(%{status: "error", error: %{code: 500, message: "server error"}})
+        send_json_error(conn, 500, "Server error")
     end
   end
 
   def push_message(conn, _) do
-    conn
-    |> put_status(400)
-    |> json(%{status: "error", error: %{code: 400, message: "Missing data"}})
+    send_json_error(conn, 400, "Missing data")
   end
 end
