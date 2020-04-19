@@ -3,22 +3,21 @@ defmodule JwpWeb.TokenController do
 
   def auth_socket(conn, params) do
     %{id: app_id} = Pow.Plug.current_user(conn)
-    params |> IO.inspect(label: "AUTH SOCKET PARAMS")
 
-    channels_config =
-      Map.get(params, "channels", [])
-      |> IO.inspect(label: "INBOUND CHANNELS CONFIG")
-      |> normalize_channels_config()
-      |> IO.inspect(label: "NORMALIZED CHANNELS CONFIG")
-      |> case do
-        {:ok, channels} ->
-          connect_token = JwpWeb.PubSubSocket.create_token(app_id, channels)
+    channels_raw = Map.get(params, "channels", [])
+    socket_id_raw = Map.get(params, "socket_id", nil)
 
-          send_json_ok(conn, %{"app_id" => app_id, "connect_token" => connect_token})
+    with {:ok, channels} <- normalize_channels_config(channels_raw),
+         {:ok, socket_id} <- check_socket_id(socket_id_raw) do
+      connect_token = JwpWeb.PubSubSocket.create_token(app_id, socket_id, channels)
+      send_json_ok(conn, %{"app_id" => app_id, "connect_token" => connect_token})
+    else
+      {:error, :bad_socket_id} ->
+        send_json_error(conn, 400, "bad_socket_id", socket_id_raw)
 
-        {:error, reason} ->
-          send_json_error(conn, 400, "bad_config", Jwp.ChannelConfig.expand_error(reason))
-      end
+      {:error, reason} ->
+        send_json_error(conn, 400, "bad_config", Jwp.ChannelConfig.expand_error(reason))
+    end
   end
 
   defp normalize_channels_config(channels) when is_list(channels) do
@@ -35,11 +34,8 @@ defmodule JwpWeb.TokenController do
         err
 
       {name, conf}, {:ok, confs} ->
-        IO.inspect(name, label: "CONFIGURE")
-
         with {:ok, conf} <- normalize_conf(conf) do
           {:ok, Map.put(confs, name, conf)}
-          |> IO.inspect(label: "LOL")
         end
     end)
   end
@@ -71,4 +67,9 @@ defmodule JwpWeb.TokenController do
   defp normalize_conf(other) do
     {:error, {:bad_config, other}}
   end
+
+  # user id can be nil, the socked will be anonymous
+  defp check_socket_id(nil), do: {:ok, nil}
+  defp check_socket_id(bin) when is_binary(bin), do: {:ok, bin}
+  defp check_socket_id(other), do: {:error, :bad_socket_id}
 end

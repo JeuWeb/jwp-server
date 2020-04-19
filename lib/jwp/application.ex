@@ -7,6 +7,7 @@ defmodule Jwp.Application do
       {DynamicSupervisor, strategy: :one_for_one, name: Jwp.History.Sup},
       {Registry, name: Jwp.History.Registry, keys: :unique},
       {Phoenix.PubSub, name: Jwp.PubSub},
+      JwpWeb.MainPresence,
       Jwp.Repo,
       JwpWeb.Endpoint
     ]

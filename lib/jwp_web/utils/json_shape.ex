@@ -28,8 +28,6 @@ defmodule JwpWeb.Utils.JsonShape do
   def send_json_error(conn, status, message, detail)
       when is_integer(status) or is_atom(status) do
     json = wrap_json_error(message, detail)
-    IO.puts("STATUS: #{inspect(status)}")
-    IO.puts("JSON: #{inspect(json |> Jason.encode!())}")
 
     conn
     |> Plug.Conn.put_status(status)

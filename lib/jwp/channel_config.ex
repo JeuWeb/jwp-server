@@ -5,7 +5,8 @@ defmodule Jwp.ChannelConfig do
     "presence_track",
     "presence_diffs",
     "webhook_join",
-    "webhook_leave"
+    "webhook_leave",
+    "meta"
   ]
   ## Channel config record
 
@@ -15,15 +16,14 @@ defmodule Jwp.ChannelConfig do
     presence_track: false,
     presence_diffs: false,
     webhook_join: false,
-    webhook_leave: false
+    webhook_leave: false,
+    meta: %{}
   )
 
   def from_map(map) when is_map(map) do
     map
     |> Map.to_list()
-    |> IO.inspect(label: "CHANNEL TO KW")
     |> from_kw()
-    |> IO.inspect(label: "CHANNEL FROM MAP")
   end
 
   def from_kw(kw),
@@ -40,6 +40,9 @@ defmodule Jwp.ChannelConfig do
 
   defp from_kw([{"webhook_leave", val} | kw], acc) when is_boolean(val),
     do: from_kw(kw, cc(acc, webhook_leave: val))
+
+  defp from_kw([{"meta", val} | kw], acc) when is_map(val),
+    do: from_kw(kw, cc(acc, meta: val))
 
   defp from_kw([{key, val} | kw], _) when key in @ext_keys,
     do: {:error, {:bad_value, {key, val}}}
@@ -64,11 +67,18 @@ defmodule Jwp.ChannelConfig do
           presence_track: pt,
           presence_diffs: pd,
           webhook_join: wj,
-          webhook_leave: wl
+          webhook_leave: wl,
+          meta: m
         )
       ) do
-    "#<ChannelConfig presence_track: #{pt}, presence_diffs: #{pd}, webhook_join: #{wj}, webhook_leave: #{
-      wl
-    }>"
+    """
+    #ChannelConfig< 
+      presence_track: #{pt}
+      presence_diffs: #{pd}
+      webhook_join: #{wj}
+      webhook_leave: #{wl}
+      meta: #{inspect(m, pretty: true)}
+    >
+    """
   end
 end

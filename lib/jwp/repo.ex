@@ -25,7 +25,6 @@ defmodule Jwp.Repo do
 
   def get_by(mod, [{:id, id}], []) do
     get(mod, id)
-    |> IO.inspect(label: "FOUND #{mod} #{id} ?")
   end
 
   def get_by!(mod, spec, [] = opts) do
