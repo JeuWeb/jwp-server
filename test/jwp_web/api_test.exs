@@ -52,6 +52,12 @@ defmodule Jwp.ApiTest do
     assert json["status"] == "ok"
     assert json["data"]["app_id"] == "seelies-dev"
     assert json["data"]["connect_token"]
+
+    payload = Jason.encode!(%{channels: ["some-channel"]})
+    {:ok, other_response} = Mojito.post("http://localhost:4002/api/v1/token/authorize-socket", [{"authorization", "Basic #{authorization}"}, {"content-type", "application/json"}], payload)
+    other_json = Jason.decode!(other_response.body)
+
+    assert String.length(json["data"]["connect_token"]) < String.length(other_json["data"]["connect_token"])
   end
 
 
@@ -78,7 +84,7 @@ defmodule Jwp.ApiTest do
 
   test "push to a channel with authorization header" do
     authorization = Base.encode64("seelies-dev:some-api-key")
-    payload = Jason.encode!(%{channel: "foo", event: "bar", payload: %{foo: "bar"}})
+    payload = Jason.encode!(%{channel: "lobby", event: "new-message", payload: %{message: "Hello world!"}})
     {:ok, response} = Mojito.post("http://localhost:4002/api/v1/push", [{"authorization", "Basic #{authorization}"}, {"content-type", "application/json"}], payload)
     json = Jason.decode!(response.body)
 
