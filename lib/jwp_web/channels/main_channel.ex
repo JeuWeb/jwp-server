@@ -50,7 +50,14 @@ defmodule JwpWeb.MainChannel do
 
     if(pd, do: init_presence_state(socket))
     if(pt, do: track_presence(socket, meta))
-    Jwp.ChannelMonitor.watch(socket, %{notify_joins: notify_joins, notify_leaves: notify_leaves})
+    Jwp.ChannelMonitor.watch(%{
+      app_id: socket.assigns.app_id,
+      socket_id: socket.assigns.socket_id,
+      channel_pid: socket.channel_pid,
+      topic: socket.assigns.short_topic,
+      notify_joins: notify_joins,
+      notify_leaves: notify_leaves
+    })
 
     {:noreply, socket}
   end

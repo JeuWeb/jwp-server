@@ -11,7 +11,7 @@ defmodule JwpWeb.WebHooksTest do
         email: "admin@seeli.es",
         password: "seelies_123",
         api_key: "some-api-key",
-        webhooks_endpoint: "http://localhost:4000/webhooks_endpoint",
+        webhooks_endpoint: "http://127.0.0.1:4000/webhooks_endpoint",
         webhooks_key: "some-webhooks-key"
       },
       []
