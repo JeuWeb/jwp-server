@@ -49,7 +49,8 @@ defmodule JwpWeb.MainChannel do
   end
 
   def handle_info(:after_join, socket) do
-    cc(presence_track: pt, presence_diffs: pd, meta: meta, notify_joins: notify_joins) = chan_conf!(socket)
+    cc(presence_track: pt, presence_diffs: pd, meta: meta, notify_joins: notify_joins) =
+      chan_conf!(socket)
 
     if(pd, do: init_presence_state(socket))
     if(pt, do: track_presence(socket, meta))
@@ -83,8 +84,20 @@ defmodule JwpWeb.MainChannel do
 
   defp notify_webhooks_endpoint(socket, event) do
     app = Jwp.Repo.get(Jwp.Apps.App, socket.assigns.app_id)
-    payload = Jason.encode!(%{channel: socket.assigns.short_topic, event: event, socket_id: socket.assigns.socket_id})
-    Mojito.post(app.webhooks_endpoint, [{"authorization", app.webhooks_key}, {"content-type", "application/json"}], payload)
+
+    payload =
+      Jason.encode!(%{
+        channel: socket.assigns.short_topic,
+        event: event,
+        socket_id: socket.assigns.socket_id
+      })
+
+    Mojito.post(
+      app.webhooks_endpoint,
+      [{"authorization", app.webhooks_key}, {"content-type", "application/json"}],
+      payload
+    )
+    |> IO.inspect()
   end
 
   # when is_map(tid)

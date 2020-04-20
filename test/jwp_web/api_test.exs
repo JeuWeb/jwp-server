@@ -1,17 +1,19 @@
 defmodule Jwp.ApiTest do
   use ExUnit.Case
 
-
   setup_all do
-    Jwp.Repo.insert(%Jwp.Apps.App{
-      id: "seelies-dev",
-      email: "admin@seeli.es",
-      password: "seelies_123",
-      api_key: "some-api-key"
-    }, [])
+    Jwp.Repo.insert(
+      %Jwp.Apps.App{
+        id: "seelies-dev",
+        email: "admin@seeli.es",
+        password: "seelies_123",
+        api_key: "some-api-key"
+      },
+      []
+    )
+
     :ok
   end
-
 
   test "ask for a token with no authorization header" do
     {:ok, response} = Mojito.post("http://localhost:4002/api/v1/token/authorize-socket")
@@ -22,20 +24,27 @@ defmodule Jwp.ApiTest do
     assert json["error"]["message"]
   end
 
-
   test "ask for a token with wrong authorization header" do
-    {:ok, response} = Mojito.post("http://localhost:4002/api/v1/token/authorize-socket", [{"authorization", "endive"}])
+    {:ok, response} =
+      Mojito.post("http://localhost:4002/api/v1/token/authorize-socket", [
+        {"authorization", "endive"}
+      ])
+
     json = Jason.decode!(response.body)
 
     assert json["status"] == "error"
     assert json["error"]["code"] == 401
     assert json["error"]["message"]
   end
-
 
   test "ask for a token with unexisting account" do
     authorization = Base.encode64("foo:bar")
-    {:ok, response} = Mojito.post("http://localhost:4002/api/v1/token/authorize-socket", [{"authorization", "Basic #{authorization}"}])
+
+    {:ok, response} =
+      Mojito.post("http://localhost:4002/api/v1/token/authorize-socket", [
+        {"authorization", "Basic #{authorization}"}
+      ])
+
     json = Jason.decode!(response.body)
 
     assert json["status"] == "error"
@@ -43,10 +52,14 @@ defmodule Jwp.ApiTest do
     assert json["error"]["message"]
   end
 
-
   test "ask for a proper token" do
     authorization = Base.encode64("seelies-dev:some-api-key")
-    {:ok, response} = Mojito.post("http://localhost:4002/api/v1/token/authorize-socket", [{"authorization", "Basic #{authorization}"}])
+
+    {:ok, response} =
+      Mojito.post("http://localhost:4002/api/v1/token/authorize-socket", [
+        {"authorization", "Basic #{authorization}"}
+      ])
+
     json = Jason.decode!(response.body)
 
     assert json["status"] == "ok"
@@ -54,12 +67,19 @@ defmodule Jwp.ApiTest do
     assert json["data"]["connect_token"]
 
     payload = Jason.encode!(%{channels: ["some-channel"]})
-    {:ok, other_response} = Mojito.post("http://localhost:4002/api/v1/token/authorize-socket", [{"authorization", "Basic #{authorization}"}, {"content-type", "application/json"}], payload)
+
+    {:ok, other_response} =
+      Mojito.post(
+        "http://localhost:4002/api/v1/token/authorize-socket",
+        [{"authorization", "Basic #{authorization}"}, {"content-type", "application/json"}],
+        payload
+      )
+
     other_json = Jason.decode!(other_response.body)
 
-    assert String.length(json["data"]["connect_token"]) < String.length(other_json["data"]["connect_token"])
+    assert String.length(json["data"]["connect_token"]) <
+             String.length(other_json["data"]["connect_token"])
   end
-
 
   test "push to a channel with no authorization header" do
     {:ok, response} = Mojito.post("http://localhost:4002/api/v1/push")
@@ -70,10 +90,14 @@ defmodule Jwp.ApiTest do
     assert json["error"]["message"]
   end
 
-
   test "push to a channel with authorization header but no channel/event/payload" do
     authorization = Base.encode64("seelies-dev:some-api-key")
-    {:ok, response} = Mojito.post("http://localhost:4002/api/v1/push", [{"authorization", "Basic #{authorization}"}])
+
+    {:ok, response} =
+      Mojito.post("http://localhost:4002/api/v1/push", [
+        {"authorization", "Basic #{authorization}"}
+      ])
+
     json = Jason.decode!(response.body)
 
     assert json["status"] == "error"
@@ -81,11 +105,19 @@ defmodule Jwp.ApiTest do
     assert json["error"]["message"]
   end
 
-
   test "push to a channel with authorization header" do
     authorization = Base.encode64("seelies-dev:some-api-key")
-    payload = Jason.encode!(%{channel: "lobby", event: "new-message", payload: %{message: "Hello world!"}})
-    {:ok, response} = Mojito.post("http://localhost:4002/api/v1/push", [{"authorization", "Basic #{authorization}"}, {"content-type", "application/json"}], payload)
+
+    payload =
+      Jason.encode!(%{channel: "lobby", event: "new-message", payload: %{message: "Hello world!"}})
+
+    {:ok, response} =
+      Mojito.post(
+        "http://localhost:4002/api/v1/push",
+        [{"authorization", "Basic #{authorization}"}, {"content-type", "application/json"}],
+        payload
+      )
+
     json = Jason.decode!(response.body)
 
     assert json["status"] == "ok"

@@ -1,5 +1,11 @@
 defmodule Jwp.Apps.App do
-  defstruct id: nil, email: nil, password: nil, api_key: nil, password_hash: nil, webhooks_endpoint: nil, webhooks_key: nil
+  defstruct id: nil,
+            email: nil,
+            password: nil,
+            api_key: nil,
+            password_hash: nil,
+            webhooks_endpoint: nil,
+            webhooks_key: nil
 
   def pow_user_id_field, do: :id
 
@@ -9,8 +15,9 @@ defmodule Jwp.Apps.App do
     |> maybe_hash_password()
   end
 
-  def maybe_hash_password(app = %{ password: nil }), do: app
-  def maybe_hash_password(app = %{ password: password }) do
+  def maybe_hash_password(app = %{password: nil}), do: app
+
+  def maybe_hash_password(app = %{password: password}) do
     app
     |> Map.put(:password_hash, hash_password(password))
     |> Map.delete(:password)
@@ -20,5 +27,7 @@ defmodule Jwp.Apps.App do
 
   def verify_password(%__MODULE__{password_hash: nil}, _), do: false
   def verify_password(_, nil), do: false
-  def verify_password(%__MODULE__{password_hash: hashed}, password), do: hash_password(password) == hashed
+
+  def verify_password(%__MODULE__{password_hash: hashed}, password),
+    do: hash_password(password) == hashed
 end
