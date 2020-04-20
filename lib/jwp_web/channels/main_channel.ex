@@ -21,10 +21,6 @@ defmodule JwpWeb.MainChannel do
     end
   end
 
-  def terminate(_reason, socket) do
-    cc(notify_leaves: notify_leaves) = chan_conf!(socket)
-    if(notify_leaves, do: notify_webhooks_endpoint(socket, "leave"))
-  end
 
   defp decode_scope(scope) do
     with [claim_id, name] <- String.split(scope, ":") do
@@ -49,12 +45,12 @@ defmodule JwpWeb.MainChannel do
   end
 
   def handle_info(:after_join, socket) do
-    cc(presence_track: pt, presence_diffs: pd, meta: meta, notify_joins: notify_joins) =
+    cc(presence_track: pt, presence_diffs: pd, meta: meta, notify_joins: notify_joins, notify_leaves: notify_leaves) =
       chan_conf!(socket)
 
     if(pd, do: init_presence_state(socket))
     if(pt, do: track_presence(socket, meta))
-    if(notify_joins, do: notify_webhooks_endpoint(socket, "join"))
+    Jwp.ChannelMonitor.watch(socket, %{notify_joins: notify_joins, notify_leaves: notify_leaves})
 
     {:noreply, socket}
   end
@@ -80,24 +76,6 @@ defmodule JwpWeb.MainChannel do
       nil -> push_error(socket, "socket_id missing, presence tracking is disabled")
       id -> {:ok, _} = Presence.track(socket, id, meta)
     end
-  end
-
-  defp notify_webhooks_endpoint(socket, event) do
-    app = Jwp.Repo.get(Jwp.Apps.App, socket.assigns.app_id)
-
-    payload =
-      Jason.encode!(%{
-        channel: socket.assigns.short_topic,
-        event: event,
-        socket_id: socket.assigns.socket_id
-      })
-
-    Mojito.post(
-      app.webhooks_endpoint,
-      [{"authorization", app.webhooks_key}, {"content-type", "application/json"}],
-      payload
-    )
-    |> IO.inspect()
   end
 
   # when is_map(tid)

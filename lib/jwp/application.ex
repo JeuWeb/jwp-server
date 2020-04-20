@@ -5,6 +5,7 @@ defmodule Jwp.Application do
     children = [
       {Task.Supervisor, name: Jwp.TaskSup},
       {DynamicSupervisor, strategy: :one_for_one, name: Jwp.History.Sup},
+      {DynamicSupervisor, strategy: :one_for_one, name: Jwp.ChannelMonitor.Supervisor},
       {Registry, name: Jwp.History.Registry, keys: :unique},
       {Phoenix.PubSub, name: Jwp.PubSub},
       JwpWeb.MainPresence,

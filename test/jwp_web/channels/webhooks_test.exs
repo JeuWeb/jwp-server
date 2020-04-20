@@ -60,8 +60,7 @@ defmodule JwpWeb.WebHooksTest do
     {:ok, socket} = connect(JwpWeb.PubSubSocket, %{"connect_token" => connect_token})
     {:ok, _reply, socket} = subscribe_and_join(socket, "jwp:seelies-dev:some-channel")
 
-    Process.flag(:trap_exit, true)
-    leave(socket)
-    assert_receive {:EXIT, _, _}
+    Process.unlink(socket.channel_pid)
+    close(socket)
   end
 end
