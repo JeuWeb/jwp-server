@@ -41,7 +41,7 @@ defmodule Jwp.ChannelConfig do
   defp from_kw([{"notify_leaves", val} | kw], acc) when is_boolean(val),
     do: from_kw(kw, cc(acc, notify_leaves: val))
 
-  defp from_kw([{"meta", val} | kw], acc) when is_map(val),
+  defp from_kw([{"meta", val} | kw], acc),
     do: from_kw(kw, cc(acc, meta: val))
 
   defp from_kw([{key, val} | _kw], _) when key in @ext_keys,

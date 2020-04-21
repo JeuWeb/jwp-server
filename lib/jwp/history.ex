@@ -55,10 +55,10 @@ defmodule Jwp.History do
   end
 
   def get_table(channel) do
-    {:ok, tab} = GenServer.call(get_pid!(channel), :get_table)
+    {:ok, _tab} = GenServer.call(get_pid!(channel), :get_table)
   end
 
-  def get_messages_after(channel, %{"time" => time, "id" => id} = tid) do
+  def get_messages_after(channel, %{"time" => time, "id" => id}) do
     {:ok, tab} = get_table(channel)
     last_key = {time, id}
 
@@ -71,7 +71,7 @@ defmodule Jwp.History do
   end
 
   @impl true
-  def init([channel]) do
+  def init([_channel]) do
     tab = :ets.new(__MODULE__, [:ordered_set, :protected, {:read_concurrency, true}])
     schedule_purge()
     {:ok, s(tab: tab, msg_id: 1)}
@@ -108,8 +108,8 @@ defmodule Jwp.History do
   def handle_info(:timeout, s(tab: tab) = state) do
     # @todo cancel purge timer ?
     case :ets.info(tab, :size) do
-      # 0 -> {:stop, :normal, state}
-      data -> {:noreply, state}
+      0 -> {:stop, :normal, state}
+      _ -> {:noreply, state}
     end
   end
 
@@ -130,7 +130,7 @@ defmodule Jwp.History do
         {key, event, message} when key < ^min_keep -> true
       end
 
-    count = :ets.select_delete(tab, match_spec)
+    _count = :ets.select_delete(tab, match_spec)
     # Logger.debug("Deleted #{count} entries from table")
     :ok
   end

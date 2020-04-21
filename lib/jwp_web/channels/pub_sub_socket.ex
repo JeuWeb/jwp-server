@@ -5,12 +5,10 @@ defmodule JwpWeb.PubSubSocket do
 
   ## Channels
   channel "jwp:*", JwpWeb.MainChannel
-  @salt "0OL5K3eGcQw8jHLpXXeTa/sSfCvUzRMdsRzmzz1MbKiuvcrsJcL0tm031hkqGTJU"
+
   @max_age 3600
 
-  @todo "verify app_id / api_key"
-
-  def connect(%{"app_id" => claim_app_id,"auth" => token} = params , socket, connect_info) do
+  def connect(%{"app_id" => claim_app_id, "auth" => token}, socket, _) do
     case verify_token(claim_app_id, token) do
       {:ok, socket_id} ->
         socket =
@@ -57,7 +55,7 @@ defmodule JwpWeb.PubSubSocket do
     end
   end
 
-  defp digest(secret, data),
+  defp digest(secret, data)when is_binary(secret) and is_binary(data),
     do: :crypto.hmac(:sha256, secret, data) |> Base.encode16
 
   defp compare_hash(a, b),
@@ -72,10 +70,10 @@ defmodule JwpWeb.PubSubSocket do
 
   defp validate_expiration_time(time) when is_integer(time) do
     now = :os.system_time(:seconds)
-    if time > now do
-      :ok
-    else
-      {:error, :expired}
+    cond do
+      time > (now + @max_age) -> {:error, :loose_expiration}
+      time > now -> :ok
+      true -> {:error, :expired}
     end
   end
 

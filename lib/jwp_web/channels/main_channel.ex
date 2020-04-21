@@ -2,11 +2,15 @@ defmodule JwpWeb.MainChannel do
   use JwpWeb, :channel
   alias JwpWeb.MainPresence, as: Presence
   require Logger
-  import Jwp.ChannelConfig, only: [cc: 0, cc: 1, cc: 2]
+  import Jwp.ChannelConfig, only: [cc: 0, cc: 1, cc: 2], warn: false
   alias Pow.Ecto.Schema.Password.Pbkdf2
 
   def join("jwp:" <> scope = channel, %{"auth" => token} = params, socket) do
     with {:ok, claim_app_id, short_topic} <- decode_scope(scope),
+          :ok <- (case socket.assigns.app_id do 
+            ^claim_app_id -> :ok
+            _ -> {:error, :bad_app_id}
+          end),
          json_data when is_binary(json_data) <- Map.get(params, "data", ""),
          :ok <- verify_auth(claim_app_id, socket.assigns.socket_id, short_topic, json_data, token),
          {:ok, config} <- parse_json_config(json_data) do
@@ -14,7 +18,6 @@ defmodule JwpWeb.MainChannel do
             send(self(), :after_join)
             maybe_poll_history(channel, params)
             socket = socket
-            |> assign(:app_id, claim_app_id)
             |> assign(:short_topic, short_topic)
             |> assign(:config, config)
             {:ok, %{}, socket}
@@ -25,8 +28,8 @@ defmodule JwpWeb.MainChannel do
     end
   end
 
-  def join(_,params,_) do
-    {:error, %{reason: "unauthorized", params: params}}
+  def join(_,_params,_) do
+    {:error, %{reason: "unauthorized"}}
   end
 
   defp decode_scope(scope) do
@@ -50,7 +53,8 @@ defmodule JwpWeb.MainChannel do
           case compare_hash(expected, signature) do
             true -> :ok
             #@todo do not log good signatures
-            false -> {:error, {:bad_signature, signature, expected}}
+            # false -> {:error, {:bad_signature, signature, expected}}
+            false -> {:error, :bad_signature}
           end
     end
   end
@@ -60,6 +64,9 @@ defmodule JwpWeb.MainChannel do
 
   defp compare_hash(a, b),
     do: Pbkdf2.compare(a, b)
+
+  defp parse_json_config(""),
+    do: import_config(%{})
 
   defp parse_json_config(json) do
     case Jason.decode(json) do
@@ -110,7 +117,6 @@ defmodule JwpWeb.MainChannel do
 
   defp init_presence_state(socket) do
     list = Presence.list(socket)
-    IO.inspect(list, label: "PRESENCE LIST")
     push(socket, "presence_state", list)
   end
 
@@ -122,7 +128,7 @@ defmodule JwpWeb.MainChannel do
   end
 
   # when is_map(tid)
-  defp maybe_poll_history(channel, %{"last_message_id" => nil}),
+  defp maybe_poll_history(_channel, %{"last_message_id" => nil}),
     do: :ok
 
   defp maybe_poll_history(channel, %{"last_message_id" => tid}) do
@@ -130,11 +136,10 @@ defmodule JwpWeb.MainChannel do
 
     # @todo link task to channel process ?
     Task.Supervisor.start_child(Jwp.TaskSup, fn ->
-      messages =
-        Jwp.History.get_messages_after(channel, tid)
-        |> Enum.each(fn {event, payload} ->
-          send(this, {:history_message, event, payload})
-        end)
+      Jwp.History.get_messages_after(channel, tid)
+      |> Enum.each(fn {event, payload} ->
+        send(this, {:history_message, event, payload})
+      end)
     end)
   end
 
@@ -144,16 +149,13 @@ defmodule JwpWeb.MainChannel do
   defp get_config(socket),
     do: socket.assigns.config
 
-  defp get_name(socket),
-    do: socket.assigns.short_topic
-
   defp get_id(socket),
     do: socket.assigns.socket_id
 
   defp push_error(socket, message) do
     push(socket, "jwp_system", %{
       type: "error",
-      message: "socket_id missing, presence tracking is disabled"
+      message: message
     })
   end
 

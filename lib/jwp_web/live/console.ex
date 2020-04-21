@@ -39,7 +39,7 @@ defmodule JwpWeb.ConsoleLive do
         if chan in topics do
           {topics, socket}
         else
-          JwpWeb.Endpoint.subscribe(chan)
+          Phoenix.PubSub.subscribe(Jwp.PubSub, chan, [])
           {[chan | topics], socket}
         end
       end)
@@ -71,11 +71,10 @@ defmodule JwpWeb.ConsoleLive do
            event: event,
            payload: %{data: data, tid: %{"id" => msg_id, "time" => time}},
            topic: channel
-         } = msg
+         }
        ) do
     # current = socket.assigns.
-    msg = %{event: event, data: data, time: time}
-    IO.inspect(msg, label: "ADDING MESSAGE")
+    msg = %{event: event, data: data, time: time, id: msg_id}
 
     # this is ugly because with_default
     messages =

@@ -8,6 +8,8 @@ defmodule Jwp.Repo do
   def generate_key(length \\ 32) when length > 31,
     do: :crypto.strong_rand_bytes(length) |> Base.encode64() |> binary_part(0, length)
 
+  def insert(entity, opts \\ [])
+
   def insert(%mod{id: id} = entity, []) do
     case CubDB.put(@repo, {mod, id}, entity) do
       :ok ->

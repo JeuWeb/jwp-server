@@ -3,7 +3,6 @@ defmodule JwpWeb.Plug.ApiAuth do
   require Logger
   use Pow.Plug.Base
   alias Plug.Conn
-  alias Pow.Config
 
   def create(conn, user, _) do
     {conn, user}

@@ -18,7 +18,6 @@ defmodule JwpWeb.Router do
 
   scope "/api/v1", JwpWeb do
     pipe_through [:api, :api_protected]
-    post "/token/authorize-socket", TokenController, :auth_socket
     post "/push", PushController, :push_message
   end
 
