@@ -20,7 +20,7 @@ defmodule Jwp.MixProject do
   def application do
     [
       mod: {Jwp.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:sasl, :logger, :runtime_tools]
     ]
   end
 

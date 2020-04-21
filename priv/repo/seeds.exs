@@ -15,5 +15,6 @@ Jwp.Apps.create(%Jwp.Apps.App{
   email: "dev@dev.dev",
   password: "$dev2020",
   api_key: "meXxp1xABjiy5skBF9ecnwDBePPqMeIL80hBgHaiHT54yroKKyVZFffb459jLFyi",
+  secret: "9rpajQOrCCdZrVY80uOtU",
   webhooks_endpoint: nil
 })
