@@ -3,23 +3,23 @@ defmodule JwpWeb.MainChannel do
   alias JwpWeb.MainPresence, as: Presence
   require Logger
   import Jwp.ChannelConfig, only: [cc: 0, cc: 1, cc: 2], warn: false
-  alias Pow.Ecto.Schema.Password.Pbkdf2
 
+  # We give the assigned socket_id of the socket to the verification
+  # function. The remote client has computed a signature with a
+  # socket_id for this channel. If the signature is valid, it means
+  # that the token was actually issued for this socket_id.
   def join("jwp:" <> scope = channel, %{"auth" => token} = params, socket) do
-    with {:ok, claim_app_id, short_topic} <- decode_scope(scope),
-          :ok <- (case socket.assigns.app_id do 
-            ^claim_app_id -> :ok
-            _ -> {:error, :bad_app_id}
-          end),
-         json_data when is_binary(json_data) <- Map.get(params, "data", ""),
-         :ok <- verify_auth(claim_app_id, socket.assigns.socket_id, short_topic, json_data, token),
-         {:ok, config} <- parse_json_config(json_data) do
+    with  {:ok, claim_app_id, short_topic} <- decode_scope(scope),
+          :ok <- check_app_id(socket, claim_app_id),
+          {:ok, json_data} <- get_json_config(params),
+          :ok <- Jwp.Auth.SocketAuth.verify_channel_token(claim_app_id, socket.assigns.socket_id, short_topic, json_data, token),
+          {:ok, config} <- parse_json_config(json_data) do
             Logger.debug("joining '#{short_topic}'")
             send(self(), :after_join)
             maybe_poll_history(channel, params)
             socket = socket
-            |> assign(:short_topic, short_topic)
-            |> assign(:config, config)
+              |> assign(:short_topic, short_topic)
+              |> assign(:config, config)
             {:ok, %{}, socket}
     else
       err ->
@@ -33,39 +33,30 @@ defmodule JwpWeb.MainChannel do
   end
 
   defp decode_scope(scope) do
-    with [claim_app_id, short_topic] <- String.split(scope, ":", parts: 2) do
+    with {:ok, [claim_app_id, short_topic]} <- Jwp.Auth.SocketAuth.split(scope, 2) do
       {:ok, claim_app_id, short_topic}
     else
       err -> {:error, {:bad_scope, err}}
     end
   end
 
-  defp verify_auth(claim_app_id, socket_id, short_topic, json_data, signature) do
-    case Jwp.Repo.fetch(Jwp.Apps.App, claim_app_id) do
-      :error -> {:error, {:app_not_found, claim_app_id}}
-      # If ok we will digest the auth string and compare the results
-      {:ok, %{secret: secret}} ->
-          auth_string = case json_data do
-            "" -> "#{socket_id}:#{short_topic}"
-            json -> "#{socket_id}:#{short_topic}:#{json}"
-          end
-          expected = digest(secret, auth_string)
-          case compare_hash(expected, signature) do
-            true -> :ok
-            #@todo do not log good signatures
-            # false -> {:error, {:bad_signature, signature, expected}}
-            false -> {:error, :bad_signature}
-          end
+  defp check_app_id(socket, claim_app_id) do
+    case socket.assigns.app_id do 
+      ^claim_app_id -> :ok
+      _ -> {:error, :bad_app_id}
     end
   end
 
-  defp digest(secret, data),
-    do: :crypto.hmac(:sha256, secret, data) |> Base.encode16
+  defp get_json_config(%{"data" => json}) when is_binary(json),
+    do: {:ok, json}
 
-  defp compare_hash(a, b),
-    do: Pbkdf2.compare(a, b)
+  defp get_json_config(%{"data" => _}),
+    do: {:error, :invalid_data}
 
-  defp parse_json_config(""),
+  defp get_json_config(_no_data_param),
+    do: {:ok, nil}
+
+  defp parse_json_config(nil),
     do: import_config(%{})
 
   defp parse_json_config(json) do

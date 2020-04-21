@@ -3,13 +3,17 @@ defmodule JwpWeb.WebHooksTest do
   import Phoenix.ChannelTest
 
   @endpoint JwpWeb.Endpoint
+  @app_secret "seeeeeelies"
+  @app_id "seelies-hook"
+  @socket_id "my-user-123"
 
   setup_all do
     Jwp.Repo.insert(
       %Jwp.Apps.App{
-        id: "seelies-dev",
+        id: @app_id,
         email: "admin@seeli.es",
         password: "seelies_123",
+        secret: @app_secret,
         api_key: "some-api-key",
         webhooks_endpoint: "http://127.0.0.1:4000/webhooks_endpoint",
         webhooks_key: "some-webhooks-key"
@@ -20,45 +24,24 @@ defmodule JwpWeb.WebHooksTest do
     :ok
   end
 
-  test "connect to a channel" do
-    authorization = Base.encode64("seelies-dev:some-api-key")
-    payload = Jason.encode!(%{channels: ["some-channel"]})
+  defp digest(data) when is_binary(data),
+    do: Jwp.Auth.SocketAuth.digest(@app_secret, data)
 
-    {:ok, response} =
-      Mojito.post(
-        "http://localhost:4002/api/v1/token/authorize-socket",
-        [{"authorization", "Basic #{authorization}"}, {"content-type", "application/json"}],
-        payload
-      )
-
-    connect_token = Jason.decode!(response.body)["data"]["connect_token"]
-    {:ok, socket} = connect(JwpWeb.PubSubSocket, %{"connect_token" => connect_token})
-
-    {:error, _error} =
-      subscribe_and_join(socket, "jwp:seelies-dev:some-unauthorized-channel", %{})
-
-    {:ok, _reply, _socket} = subscribe_and_join(socket, "jwp:seelies-dev:some-channel")
+  defp socket_params(:expire, expire) do
+    # A socket connection token is "<socketID>:<endTime>"
+    connect_info = "#{@socket_id}:#{expire}"
+    token = digest(connect_info)
+    _params = %{"app_id" => @app_id, "auth" => "#{connect_info}:#{token}"}
   end
 
+
   test "opt-in for joins and leaves notifications" do
-    authorization = Base.encode64("seelies-dev:some-api-key")
+    params = socket_params(:expire, :os.system_time(:second) + 60)
+    {:ok, socket} = connect(JwpWeb.PubSubSocket, params)
 
-    payload =
-      Jason.encode!(%{
-        socket_id: "sephi-chan",
-        channels: %{"some-channel" => %{notify_joins: true, notify_leaves: true}}
-      })
-
-    {:ok, response} =
-      Mojito.post(
-        "http://localhost:4002/api/v1/token/authorize-socket",
-        [{"authorization", "Basic #{authorization}"}, {"content-type", "application/json"}],
-        payload
-      )
-
-    connect_token = Jason.decode!(response.body)["data"]["connect_token"]
-    {:ok, socket} = connect(JwpWeb.PubSubSocket, %{"connect_token" => connect_token})
-    {:ok, _reply, socket} = subscribe_and_join(socket, "jwp:seelies-dev:some-channel")
+    connect_info = "#{@socket_id}:some-channel"
+    auth = digest(connect_info)
+    assert {:ok, _, socket} = subscribe_and_join(socket, "jwp:#{@app_id}:some-channel", %{"auth" => auth})
 
     Process.unlink(socket.channel_pid)
     close(socket)

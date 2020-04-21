@@ -26,7 +26,7 @@ defmodule JwpWeb.MainChannelTest do
   end
 
   defp digest(data) when is_binary(data),
-    do: :crypto.hmac(:sha256, @app_secret, data) |> Base.encode16
+    do: Jwp.Auth.SocketAuth.digest(@app_secret, data)
 
   defp socket_params(:expire, expire) do
     # A socket connection token is "<socketID>:<endTime>"
@@ -71,13 +71,5 @@ defmodule JwpWeb.MainChannelTest do
     assert ass.socket_id == @socket_id
   end
 
-  # test "shout broadcasts to main_channel:lobby", %{socket: socket} do
-  #   push(socket, "shout", %{"hello" => "all"})
-  #   assert_broadcast "shout", %{"hello" => "all"}
-  # end
-
-  # test "broadcasts are pushed to the client", %{socket: socket} do
-  #   broadcast_from!(socket, "broadcast", %{"some" => "data"})
-  #   assert_push "broadcast", %{"some" => "data"}
-  # end
+  @todo "test channel with data"
 end
