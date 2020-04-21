@@ -14,7 +14,6 @@ defmodule JwpWeb.MainChannel do
           {:ok, json_data} <- get_json_config(params),
           :ok <- Jwp.Auth.SocketAuth.verify_channel_token(claim_app_id, socket.assigns.socket_id, short_topic, json_data, token),
           {:ok, config} <- parse_json_config(json_data) do
-            Logger.debug("joining '#{short_topic}'")
             send(self(), :after_join)
             maybe_poll_history(channel, params)
             socket = socket

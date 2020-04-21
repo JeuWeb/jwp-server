@@ -37,7 +37,7 @@ defmodule JwpWeb.WebHooksTest do
 
   test "opt-in for joins and leaves notifications" do
     params = socket_params(:expire, :os.system_time(:second) + 60)
-    {:ok, socket} = connect(JwpWeb.PubSubSocket, params)
+    assert {:ok, socket} = connect(JwpWeb.PubSubSocket, params)
 
     connect_info = "#{@socket_id}:some-channel"
     auth = digest(connect_info)
