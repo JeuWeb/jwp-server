@@ -40,7 +40,7 @@ defmodule JwpWeb.MainChannel do
   end
 
   defp check_app_id(socket, claim_app_id) do
-    case socket.assigns.app_id do 
+    case socket.assigns.app_id do
       ^claim_app_id -> :ok
       _ -> {:error, :bad_app_id}
     end
@@ -100,9 +100,9 @@ defmodule JwpWeb.MainChannel do
     {:noreply, socket}
   end
 
-  def handle_in(msg, socket) do
-    Logger.warn("Unhandled IN in #{__MODULE__}: #{inspect(msg)}")
-    {:noreply, socket}    
+  def handle_in(event, payload, socket) do
+    Logger.debug("Unhandled event '#{event}' in #{__MODULE__}: #{inspect(payload)}")
+    {:noreply, socket}
   end
 
   defp init_presence_state(socket) do
