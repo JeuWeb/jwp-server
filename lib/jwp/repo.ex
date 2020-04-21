@@ -16,12 +16,19 @@ defmodule Jwp.Repo do
     end
   end
 
-  @doc """
-  We are providing the same API as Ecto Repos, so the getters return
-  an entity or nil. Not an :ok/:error tuple.
-  """
-  def get(mod, id),
-    do: CubDB.get(@repo, {mod, id}, nil)
+  def fetch(mod, id) do
+    case CubDB.get(@repo, {mod, id}, :__NOT_FOUND__) do
+      :__NOT_FOUND__ -> :error
+      found -> {:ok, found}
+    end
+  end
+
+  def get(mod, id) do
+    case fetch(mod, id) do
+      :error -> nil
+      {:ok, found} -> found
+    end
+  end
 
   def get_by(mod, [{:id, id}], []) do
     get(mod, id)

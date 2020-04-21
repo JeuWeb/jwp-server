@@ -1,8 +1,9 @@
 defmodule Jwp.Apps.App do
   defstruct id: nil,
             email: nil,
-            password: nil,
             api_key: nil,
+            secret: nil,
+            password: nil,
             password_hash: nil,
             webhooks_endpoint: nil,
             webhooks_key: nil

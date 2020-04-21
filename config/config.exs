@@ -7,8 +7,7 @@
 # General application configuration
 use Mix.Config
 
-config :jwp,
-  ecto_repos: [Jwp.Repo]
+
 
 # Configures the endpoint
 config :jwp, JwpWeb.Endpoint,
@@ -30,7 +29,8 @@ config :jwp, :pow, users_context: Jwp.Apps
 
 config :jwp, Jwp.Repo,
   data_dir: Path.join(File.cwd!(), "var/db-#{Mix.env()}"),
-  name: Jwp.Repo
+  name: Jwp.Repo,
+  auto_compact: Mix.env != :prod
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

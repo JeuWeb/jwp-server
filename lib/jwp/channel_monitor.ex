@@ -1,12 +1,26 @@
 defmodule Jwp.ChannelMonitor do
   use GenServer, restart: :transient
+  require Logger
+  
   @supervisor Jwp.ChannelMonitor.Supervisor
-
+  @state_keys [:notify_joins, :notify_leaves, :app_id, :topic, :socket_id, :channel_pid]
+  
 
   def watch(params) do
-    DynamicSupervisor.start_child(@supervisor, {__MODULE__, params})
+    case validate_params(params) do
+      {:ok, params} -> DynamicSupervisor.start_child(@supervisor, {__MODULE__, params})
+      err -> err
+    end
   end
 
+
+  defp validate_params(params) do
+    Enum.reject(@state_keys, &Map.has_key?(params, &1))
+    |> case do
+        [] -> {:ok, Map.take(params, @state_keys)}
+        missing -> {:error, {:missing_keys, missing}}
+      end
+  end
 
   def start_link(params) do
     GenServer.start_link(__MODULE__, params)
@@ -26,13 +40,15 @@ defmodule Jwp.ChannelMonitor do
   end
 
 
-  def handle_info({:DOWN, ref, _, _, {:shutdown, _}}, %{monitor_ref: ref} = state) do
+  def handle_info({:DOWN, ref, _, _, {:shutdown, _} = reason}, %{monitor_ref: ref} = state) do
+    Logger.debug("Channel :DOWN #{inspect reason}")
     if state.notify_leaves, do: notify_webhooks_endpoint(state, "leave")
     {:stop, :normal, state}
   end
 
 
-  def handle_info({:DOWN, ref, _, _, _other_reason}, %{monitor_ref: ref} = state) do
+  def handle_info({:DOWN, ref, _, _, reason}, %{monitor_ref: ref} = state) do
+    Logger.debug("Channel :DOWN #{inspect reason}")
     {:stop, :normal, state}
   end
 

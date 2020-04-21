@@ -3,17 +3,21 @@ defmodule JwpWeb.MainChannel do
   alias JwpWeb.MainPresence, as: Presence
   require Logger
   import Jwp.ChannelConfig, only: [cc: 0, cc: 1, cc: 2]
+  alias Pow.Ecto.Schema.Password.Pbkdf2
 
-  def join("jwp:" <> scope = channel, payload, socket) do
-    with {:ok, claim_id, short_topic} <- decode_scope(scope),
-         :ok <- check_app_id(socket, claim_id),
-         {:ok, conf} <- check_channel(socket, short_topic) do
-      Logger.debug("joining '#{short_topic}'")
-      Logger.debug(Jwp.ChannelConfig.format(conf))
-      # history will send messages to this channel process from a Task
-      send(self(), :after_join)
-      maybe_poll_history(channel, payload)
-      {:ok, assign(socket, :short_topic, short_topic)}
+  def join("jwp:" <> scope = channel, %{"auth" => token} = params, socket) do
+    with {:ok, claim_app_id, short_topic} <- decode_scope(scope),
+         json_data when is_binary(json_data) <- Map.get(params, "data", ""),
+         :ok <- verify_auth(claim_app_id, socket.assigns.socket_id, short_topic, json_data, token),
+         {:ok, config} <- parse_json_config(json_data) do
+            Logger.debug("joining '#{short_topic}'")
+            send(self(), :after_join)
+            maybe_poll_history(channel, params)
+            socket = socket
+            |> assign(:app_id, claim_app_id)
+            |> assign(:short_topic, short_topic)
+            |> assign(:config, config)
+            {:ok, %{}, socket}
     else
       err ->
         Logger.error(inspect(err))
@@ -21,36 +25,63 @@ defmodule JwpWeb.MainChannel do
     end
   end
 
+  def join(_,params,_) do
+    {:error, %{reason: "unauthorized", params: params}}
+  end
 
   defp decode_scope(scope) do
-    with [claim_id, name] <- String.split(scope, ":") do
-      {:ok, claim_id, name}
+    with [claim_app_id, short_topic] <- String.split(scope, ":", parts: 2) do
+      {:ok, claim_app_id, short_topic}
     else
       err -> {:error, {:bad_scope, err}}
     end
   end
 
-  defp check_app_id(socket, app_id) do
-    case socket.assigns.app_id do
-      ^app_id -> :ok
-      _ -> {:error, {:cannot_claim, app_id}}
+  defp verify_auth(claim_app_id, socket_id, short_topic, json_data, signature) do
+    case Jwp.Repo.fetch(Jwp.Apps.App, claim_app_id) do
+      :error -> {:error, {:app_not_found, claim_app_id}}
+      # If ok we will digest the auth string and compare the results
+      {:ok, %{secret: secret}} ->
+          auth_string = case json_data do
+            "" -> "#{socket_id}:#{short_topic}"
+            json -> "#{socket_id}:#{short_topic}:#{json}"
+          end
+          expected = digest(secret, auth_string)
+          case compare_hash(expected, signature) do
+            true -> :ok
+            #@todo do not log good signatures
+            false -> {:error, {:bad_signature, signature, expected}}
+          end
     end
   end
 
-  defp check_channel(socket, channel) do
-    case Map.fetch(socket.assigns.allowed_channels, channel) do
-      {:ok, cc() = conf} -> {:ok, conf}
-      :error -> {:error, {:not_allowed, channel}}
+  defp digest(secret, data),
+    do: :crypto.hmac(:sha256, secret, data) |> Base.encode16
+
+  defp compare_hash(a, b),
+    do: Pbkdf2.compare(a, b)
+
+  defp parse_json_config(json) do
+    case Jason.decode(json) do
+      {:ok, data} -> import_config(data)
+      other -> other
     end
+  end
+
+  defp import_config(data) do
+    data
+    |> Map.get("options", %{})
+    |> Map.put("meta", Map.get(data, "meta", nil))
+    |> Jwp.ChannelConfig.from_map
   end
 
   def handle_info(:after_join, socket) do
     cc(presence_track: pt, presence_diffs: pd, meta: meta, notify_joins: notify_joins, notify_leaves: notify_leaves) =
-      chan_conf!(socket)
+      get_config(socket)
 
     if(pd, do: init_presence_state(socket))
     if(pt, do: track_presence(socket, meta))
-    Jwp.ChannelMonitor.watch(%{
+    {:ok, _} = Jwp.ChannelMonitor.watch(%{
       app_id: socket.assigns.app_id,
       socket_id: socket.assigns.socket_id,
       channel_pid: socket.channel_pid,
@@ -70,6 +101,11 @@ defmodule JwpWeb.MainChannel do
   def handle_info(msg, socket) do
     Logger.warn("Unhandled info in #{__MODULE__}: #{inspect(msg)}")
     {:noreply, socket}
+  end
+
+  def handle_in(msg, socket) do
+    Logger.warn("Unhandled IN in #{__MODULE__}: #{inspect(msg)}")
+    {:noreply, socket}    
   end
 
   defp init_presence_state(socket) do
@@ -105,17 +141,8 @@ defmodule JwpWeb.MainChannel do
   defp maybe_poll_history(_, _),
     do: :ignore
 
-  defp chan_conf!(socket) do
-    case socket.assigns.allowed_channels[get_name(socket)] do
-      nil ->
-        raise "Channel configuration for #{socket.get_name(socket)} not found in #{
-                inspect(socket.assigns.allowed_channels)
-              }"
-
-      found ->
-        found
-    end
-  end
+  defp get_config(socket),
+    do: socket.assigns.config
 
   defp get_name(socket),
     do: socket.assigns.short_topic
@@ -129,4 +156,5 @@ defmodule JwpWeb.MainChannel do
       message: "socket_id missing, presence tracking is disabled"
     })
   end
+
 end
