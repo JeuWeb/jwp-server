@@ -20,7 +20,9 @@ config :jwp, JwpWeb.Endpoint,
 # Configures Elixir's Logger
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
-  metadata: [:request_id]
+  metadata: [:request_id],
+  handle_otp_reports: true,
+  handle_sasl_reports: true
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason

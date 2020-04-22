@@ -45,6 +45,7 @@ defmodule Jwp.Repo do
 
   def drop() do
     data_dir = Keyword.fetch!(@conf, :data_dir)
+    |> IO.inspect(label: "Dropping repository")
     File.rm_rf(data_dir)
   end
 end

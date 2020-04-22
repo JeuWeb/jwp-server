@@ -7,7 +7,19 @@ defmodule JwpWeb.ConsoleLive do
     ~L"""
     <p>App: <%= @app_id %></p>
     <pre>App: <%= inspect @channels %></pre>
-    <pre>App: <%= Jason.encode!(@messages, pretty: true) %></pre>
+    <div id="all-chans-messages" style="display: flex">
+      <%= for {channel, last_message} <- @messages do %>
+          <div>
+            <h4><%= channel %></h4>
+            <div id="chan-<%= channel %>" phx-update="append" >
+              <div id="<%= "#{channel}-#{last_message.id}" %>" style="display: flex">
+                <code><%= last_message.event %>:</code>
+                <pre><%= Jason.encode!(last_message.data) %></pre>
+              </div>
+            </div>
+          </div>
+      <% end %>
+    </div>
     """
   end
 
@@ -50,8 +62,8 @@ defmodule JwpWeb.ConsoleLive do
   # Match a pushed message from a client (because we have :tid).
   # Presence message are not matched
   def handle_info(%Broadcast{payload: %{tid: _tid}} = msg, socket) do
-    IO.puts("CALL add_channel_message")
-    {:noreply, add_channel_message(socket, msg)}
+    IO.puts("CALL set_channel_message")
+    {:noreply, set_channel_message(socket, msg)}
   end
 
   # Matches and ignores presence messages
@@ -65,7 +77,7 @@ defmodule JwpWeb.ConsoleLive do
     {:noreply, socket}
   end
 
-  defp add_channel_message(
+  defp set_channel_message(
          socket,
          %Broadcast{
            event: event,
@@ -76,11 +88,7 @@ defmodule JwpWeb.ConsoleLive do
     # current = socket.assigns.
     msg = %{event: event, data: data, time: time, id: msg_id}
 
-    # this is ugly because with_default
-    messages =
-      socket.assigns.messages
-      |> Map.update(channel, [msg], &[msg | &1])
-
+    messages = Map.put(socket.assigns.messages, channel, msg)
     assign(socket, :messages, messages)
   end
 end

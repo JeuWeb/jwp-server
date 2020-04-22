@@ -4,16 +4,16 @@ defmodule Jwp.Application do
   def start(_type, _args) do
     children = [
       {Task.Supervisor, name: Jwp.TaskSup},
+      {Registry, name: Jwp.History.Registry, keys: :unique},
       {DynamicSupervisor, strategy: :one_for_one, name: Jwp.History.Sup},
       {DynamicSupervisor, strategy: :one_for_one, name: Jwp.ChannelMonitor.Supervisor},
-      {Registry, name: Jwp.History.Registry, keys: :unique},
       {Phoenix.PubSub, name: Jwp.PubSub},
       JwpWeb.MainPresence,
       Jwp.Repo,
       JwpWeb.Endpoint
     ]
 
-    opts = [strategy: :one_for_one, name: Jwp.Supervisor]
+    opts = [strategy: :rest_for_one, name: Jwp.Supervisor]
     Supervisor.start_link(children, opts)
   end
 
