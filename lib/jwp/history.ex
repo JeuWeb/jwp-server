@@ -51,6 +51,9 @@ defmodule Jwp.History do
   end
 
   def register_message(channel, event, payload) do
+    # Call 1 time with handling {:normal (shutdown ?), _} and :noproc.
+    # If it fails, boot/get_pid! again and call again but not catching
+    # thoses clauses.
     GenServer.call(get_pid!(channel), {:register_message, event, payload})
   end
 
