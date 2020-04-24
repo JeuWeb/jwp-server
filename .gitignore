@@ -29,3 +29,4 @@ jwp-*.tar
 /docker/
 /var/
 .vscode
+/config/prod.secret.exs
