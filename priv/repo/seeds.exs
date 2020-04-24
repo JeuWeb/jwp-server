@@ -16,5 +16,5 @@ Jwp.Apps.create(%Jwp.Apps.App{
   password: "$dev2020",
   api_key: "meXxp1xABjiy5skBF9ecnwDBePPqMeIL80hBgHaiHT54yroKKyVZFffb459jLFyi",
   secret: "9rpajQOrCCdZrVY80uOtU",
-  webhooks_endpoint: nil
+  webhooks_endpoint: "http://127.0.0.1:8080/webhook"
 })

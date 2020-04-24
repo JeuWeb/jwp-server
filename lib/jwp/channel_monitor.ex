@@ -55,8 +55,16 @@ defmodule Jwp.ChannelMonitor do
 
   defp notify_webhooks_endpoint(state, event) do
     app = Jwp.Repo.get(Jwp.Apps.App, state.app_id)
-    payload = Jason.encode!(%{channel: state.topic, event: event, socket_id: state.socket_id})
-    headers = [{"authorization", app.webhooks_key}, {"content-type", "application/json"}]
-    Mojito.post(app.webhooks_endpoint, headers, payload)
+    case app.webhooks_endpoint do
+      nil -> 
+        Logger.debug("No endpoint configured for app #{state.app_id}")
+        :ok
+      endpoint ->
+        payload = Jason.encode!(%{channel: state.topic, event: event, socket_id: state.socket_id})
+        headers = [{"authorization", app.webhooks_key}, {"content-type", "application/json"}]
+        Logger.debug("Calling webhook endpoint #{endpoint} for event '#{event}'")
+        HTTPoison.post(endpoint, payload, headers)
+        |> IO.inspect
+    end
   end
 end
