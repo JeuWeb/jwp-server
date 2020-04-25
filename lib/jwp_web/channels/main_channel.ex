@@ -15,7 +15,6 @@ defmodule JwpWeb.MainChannel do
           :ok <- Jwp.Auth.SocketAuth.verify_channel_token(claim_app_id, socket.assigns.socket_id, short_topic, json_data, token),
           {:ok, config} <- parse_json_config(json_data) do
             send(self(), :after_join)
-            maybe_poll_history(channel, params)
             socket = socket
               |> assign(:short_topic, short_topic)
               |> assign(:config, config)
@@ -90,11 +89,6 @@ defmodule JwpWeb.MainChannel do
     {:noreply, socket}
   end
 
-  def handle_info({:history_message, event, payload}, socket) do
-    push(socket, event, payload)
-    {:noreply, socket}
-  end
-
   def handle_info(msg, socket) do
     Logger.warn("Unhandled info in #{__MODULE__}: #{inspect(msg)}")
     {:noreply, socket}
@@ -116,25 +110,6 @@ defmodule JwpWeb.MainChannel do
       id -> {:ok, _} = Presence.track(socket, id, meta)
     end
   end
-
-  # when is_map(tid)
-  defp maybe_poll_history(_channel, %{"last_message_id" => nil}),
-    do: :ok
-
-  defp maybe_poll_history(channel, %{"last_message_id" => tid}) do
-    this = self()
-
-    # @todo link task to channel process ?
-    Task.Supervisor.start_child(Jwp.TaskSup, fn ->
-      Jwp.History.get_messages_after(channel, tid)
-      |> Enum.each(fn {event, payload} ->
-        send(this, {:history_message, event, payload})
-      end)
-    end)
-  end
-
-  defp maybe_poll_history(_, _),
-    do: :ignore
 
   defp get_config(socket),
     do: socket.assigns.config
