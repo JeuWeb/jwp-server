@@ -1,0 +1,23 @@
+<div>
+  <table class="table is-fullwidth">
+    <thead>
+      <tr>
+        <th>Channel</th>
+        <th>Event</th>
+        <th>Data</th>
+      </tr>
+    </thead>
+    <tbody id="messages-list" phx-update="prepend">
+      <%= if @message do %>
+        <%
+          %{event: event, short_topic: short_topic, payload: payload} = @message
+        %>
+        <tr id="messages-list-msg-<%= @msg_id %>" class="messages-list-message">
+          <td class="is-family-monospace"><%= short_topic %></td>
+          <td class="is-family-monospace"><%= event %></td>
+          <td><pre><%= Jason.encode!(payload, pretty: true) %></pre></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

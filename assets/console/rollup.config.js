@@ -12,6 +12,12 @@ export default [
       file: path.resolve(__dirname, '../../priv/static/js/console.js'),
       format: 'umd',
     },
-    plugins: [resolve(), commonjs(), buble()],
+    plugins: [
+      resolve(),
+      commonjs(),
+      buble({
+        transforms: { forOf: false },
+      }),
+    ],
   },
 ]

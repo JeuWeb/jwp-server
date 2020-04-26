@@ -14,7 +14,6 @@
   animation-iteration-count: infinite;
 }
 
-
 .welcome .title,
 .welcome .subtitle {
   color: white;
@@ -24,3 +23,14 @@
   display: flex;
   justify-content: space-between;
 }
+
+/* @keyframes messages-list-add {
+  0% { opacity: 0; transform: scale(0) }
+  100% { opacity: 1; transform: scale(1) }
+} */
+
+/* .messages-list-message {
+  animation-name: messages-list-add;
+  animation-duration: .3s;
+  animation-timing-function: ease-in;
+} */

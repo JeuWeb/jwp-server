@@ -1,17 +1,18 @@
-<p>App: <%= @app_id %></p>
 <div class="columns">
-  <div class="column">
+  <div class="column is-one-quarter">
     <%#
     id: is necessary to have a statful component. We pass the
     app_id so we can reset the component if we would change which
     app we are viewing.
     %>
-    <%= live_component @socket, ConsoleChannelsListComponent,
+    <%= live_component @socket, JwpWeb.ConsoleChannelsListComponent,
       id: @app_id,
       app_id: @app_id,
       active_channels: @active_channels %>
   </div>
   <div class="column">
-    Hoi !
+    <%= live_component @socket, JwpWeb.ConsoleMessageDisplayComponent,
+      id: @app_id,
+      last_message: @last_message %>
   </div>
 </div>

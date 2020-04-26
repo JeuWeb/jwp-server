@@ -2,7 +2,6 @@ defmodule JwpWeb.ConsoleLive do
   use Phoenix.LiveView
   require Logger
   alias Phoenix.Socket.Broadcast
-  alias JwpWeb.ConsoleChannelsListComponent
 
   if Mix.env() == :prod do
     @refresh_channels_ms Jwp.PubSub.ChannelWitness.purge_cycle(:millisecond)
@@ -16,42 +15,19 @@ defmodule JwpWeb.ConsoleLive do
     socket = socket
       |> assign(:active_channels, [])
       |> assign(:app_id, app_id)
-      |> assign(:messages, %{})
+      |> assign(:last_message, nil)
       |> fecth_active_channels()
 
     {:ok, socket}
   end
 
-
-  # We subscribe the liveview process to the channels. We store this
-  # information in the socket as the socket is used as our state, but
-  # the websocket itself will not handle those channel message. They
-  # will be sent to the process in handle_info.
-  # defp subscribe_all(channels, socket, topics_in \\ []) do
-  #   {new_topics, socket} =
-  #     Enum.reduce(channels, {topics_in, socket}, fn chan, {topics, socket} ->
-  #       if chan in topics do
-  #         {topics, socket}
-  #       else
-  #         Phoenix.PubSub.subscribe(Jwp.PubSub, chan, [])
-  #         {[chan | topics], socket}
-  #       end
-  #     end)
-
-  #   assign(socket, :channels, new_topics)
-  # end
-
-  # Match a pushed message from a client (because we have :tid).
-  # Presence message are not matched
-  def handle_info(%Broadcast{payload: %{tid: _tid}} = msg, socket) do
-    IO.puts("CALL set_channel_message")
-    {:noreply, set_channel_message(socket, msg)}
-  end
-
-  # Matches and ignores presence messages
   def handle_info(%Broadcast{event: event}, socket)
       when event in ["presence_state", "presence_diff"] do
     {:noreply, socket}
+  end
+
+  def handle_info(%Broadcast{} = msg, socket) do
+    {:noreply, assign(socket, :last_message, msg)}
   end
 
   def handle_info(:refresh_channels_list, socket) do
