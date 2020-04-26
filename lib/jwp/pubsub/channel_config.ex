@@ -1,4 +1,4 @@
-defmodule Jwp.ChannelConfig do
+defmodule Jwp.PubSub.ChannelConfig do
   require Record
 
   @ext_keys [

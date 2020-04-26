@@ -2,17 +2,18 @@ defmodule JwpWeb.MainChannel do
   use JwpWeb, :channel
   alias JwpWeb.MainPresence, as: Presence
   require Logger
-  import Jwp.ChannelConfig, only: [cc: 0, cc: 1, cc: 2], warn: false
+  import Jwp.PubSub.ChannelConfig, only: [cc: 0, cc: 1, cc: 2], warn: false
+  alias Jwp.Auth.SocketAuth
 
   # We give the assigned socket_id of the socket to the verification
   # function. The remote client has computed a signature with a
   # socket_id for this channel. If the signature is valid, it means
   # that the token was actually issued for this socket_id.
-  def join("jwp:" <> scope = channel, %{"auth" => token} = params, socket) do
-    with  {:ok, claim_app_id, short_topic} <- decode_scope(scope),
-          :ok <- check_app_id(socket, claim_app_id),
+  def join("jwp:" <> scope = _channel, %{"auth" => token} = params, socket) do
+    with  {:ok, claim_app_id, short_topic} <- SocketAuth.decode_scope(scope),
+          :ok <- SocketAuth.check_app_id(socket, claim_app_id),
           {:ok, json_data} <- get_json_config(params),
-          :ok <- Jwp.Auth.SocketAuth.verify_channel_token(claim_app_id, socket.assigns.socket_id, short_topic, json_data, token),
+          :ok <- SocketAuth.verify_channel_token(claim_app_id, socket.assigns.socket_id, short_topic, json_data, token),
           {:ok, config} <- parse_json_config(json_data) do
             send(self(), :after_join)
             socket = socket
@@ -30,20 +31,7 @@ defmodule JwpWeb.MainChannel do
     {:error, %{reason: "unauthorized"}}
   end
 
-  defp decode_scope(scope) do
-    with {:ok, [claim_app_id, short_topic]} <- Jwp.Auth.SocketAuth.split(scope, 2) do
-      {:ok, claim_app_id, short_topic}
-    else
-      err -> {:error, {:bad_scope, err}}
-    end
-  end
 
-  defp check_app_id(socket, claim_app_id) do
-    case socket.assigns.app_id do
-      ^claim_app_id -> :ok
-      _ -> {:error, :bad_app_id}
-    end
-  end
 
   defp get_json_config(%{"data" => json}) when is_binary(json),
     do: {:ok, json}
@@ -68,7 +56,7 @@ defmodule JwpWeb.MainChannel do
     data
     |> Map.get("options", %{})
     |> Map.put("meta", Map.get(data, "meta", nil))
-    |> Jwp.ChannelConfig.from_map
+    |> Jwp.PubSub.ChannelConfig.from_map
   end
 
   def handle_info(:after_join, socket) do
@@ -77,7 +65,7 @@ defmodule JwpWeb.MainChannel do
 
     if(pd, do: init_presence_state(socket))
     if(pt, do: track_presence(socket, meta))
-    {:ok, _} = Jwp.ChannelMonitor.watch(%{
+    {:ok, _} = Jwp.PubSub.ChannelMonitor.watch(%{
       app_id: socket.assigns.app_id,
       socket_id: socket.assigns.socket_id,
       channel_pid: socket.channel_pid,

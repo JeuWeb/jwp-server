@@ -4,8 +4,9 @@ defmodule Jwp.Application do
   def start(_type, _args) do
     children = [
       {Task.Supervisor, name: Jwp.TaskSup},
-      {DynamicSupervisor, strategy: :one_for_one, name: Jwp.ChannelMonitor.Supervisor},
+      {DynamicSupervisor, strategy: :one_for_one, name: Jwp.PubSub.ChannelMonitor.Supervisor},
       {Phoenix.PubSub, name: Jwp.PubSub},
+      Jwp.PubSub.ChannelWitness,
       JwpWeb.MainPresence,
       Jwp.Repo,
       JwpWeb.Endpoint

@@ -1,8 +1,8 @@
-defmodule Jwp.ChannelMonitor do
+defmodule Jwp.PubSub.ChannelMonitor do
   use GenServer, restart: :transient
   require Logger
   
-  @supervisor Jwp.ChannelMonitor.Supervisor
+  @supervisor Jwp.PubSub.ChannelMonitor.Supervisor
   @state_keys [:notify_joins, :notify_leaves, :app_id, :topic, :socket_id, :channel_pid]
   
 
@@ -64,7 +64,10 @@ defmodule Jwp.ChannelMonitor do
         headers = [{"authorization", app.webhooks_key}, {"content-type", "application/json"}]
         Logger.debug("Calling webhook endpoint #{endpoint} for event '#{event}'")
         HTTPoison.post(endpoint, payload, headers)
-        |> IO.inspect
+        |> case do
+          {:ok, _} -> :ok
+          {:error, reason} -> Logger.error(inspect reason)
+        end
     end
   end
 end

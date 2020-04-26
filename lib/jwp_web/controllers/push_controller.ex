@@ -9,6 +9,7 @@ defmodule JwpWeb.PushController do
 
     case JwpWeb.Endpoint.broadcast!(channel, event, payload) do
       :ok -> 
+        Jwp.PubSub.ChannelWitness.bump_channel(app_id, channel)
         send_json_ok(conn, 201, %{})
       err ->
         Logger.error(inspect(err))

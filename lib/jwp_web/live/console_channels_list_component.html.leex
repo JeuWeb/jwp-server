@@ -1,0 +1,28 @@
+<nav class="panel is-info">
+  <p class="panel-heading">
+    Channels
+  </p>
+  <%= for {topic, rchan(short_topic: short_topic, subscribed: subscribed)} <- @channels do %>
+    <%
+      {class, phx_event, icon} = if subscribed do
+        {"is-active", "unsubscribe_to", "fa-eye"}
+      else
+        {"", "subscribe_to", "fa-eye-slash"}
+      end
+    %>
+    <a class="panel-block channel-list-item <%= class %>"
+      phx-click="<%= phx_event %>"
+      phx-target="<%= @myself %>"
+      phx-value-topic="<%= topic %>">
+      <span class="is-family-monospace"><%= short_topic %></span>
+      <span class="panel-icon">
+        <i class="fas <%= icon %>" aria-hidden="true"></i>
+      </span>
+    </a>
+  <% end %>
+  <%= if 0 == map_size(@channels) do %>
+    <p class="panel-block">
+      No active channels
+    </p>
+  <% end %>
+</nav>

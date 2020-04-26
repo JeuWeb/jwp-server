@@ -1,0 +1,26 @@
+
+@keyframes welcome-bg {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 0 100%; }
+  100% { background-position: 0% 0%; }
+}
+
+.welcome {
+  background-image: linear-gradient(95deg, #5B86E5 50%, #36A6DC 70%);
+  background-size: 100% 3000px;
+  animation-name: welcome-bg;
+  animation-duration: 40s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+
+.welcome .title,
+.welcome .subtitle {
+  color: white;
+}
+
+.channel-list-item {
+  display: flex;
+  justify-content: space-between;
+}
