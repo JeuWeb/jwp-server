@@ -64,6 +64,88 @@ Pour pouvoir se connecter à un canal, le client JavaScript doit envoyer au serv
 Pour chaque canal, l'application doit générer un token contenant plusieurs informations et le transmettre au code JavaScript afin qu'il puisse être envoyé au serveur WebSocket.
 
 
+## Cookbook
+
+### Comment puis-je utiliser le service en PHP ?
+
+Côté HTML, vous devez inclure le script `jwp.min.js` avant le code de l'application. Puis utiliser l'objet `jwp` :
+
+```js
+// Connexion au serveur de WebSocket.
+var socket = jwp.connect('ws://push.jeuweb.org/socket', jwp.xhrParams('/jwp/authorize-socket.php'));
+```
+
+Quand ce code est exécuté par le navigateur de vos visiteurs, il exécutera une requête Ajax en POST vers votre site (à l'adresse `/jwp/authorize-socket.php`, que vous pouvez modifier à votre convenance) pour autoriser (ou non) la connexion.
+
+L'application doit donc gérer cette requête POST en délivrant une réponse en JSON.
+
+```php
+$socketId = $_SESSION['user_id']; // Vous pouvez utiliser l'ID de votre utilisateur, un UUID, un nombre aléatoire…
+$jwp = new Jwp\Client(new Jwp\Auth('JWP_APP_ID', 'JWP_API_KEY', 'JWP_SECRET')); // On instancie le client JWP.
+$json = json_decode(file_get_contents('php://input'), true); // On récupère le JSON envoyé dans la requête Ajax.
+$token = $jwp->authenticateSocket($socketID, 60); // On génère un token qui sera valide 60 secondes.
+
+exit(json_encode([
+  'status' => 'ok',
+  'data' => [
+    'auth' => $token,
+    'app_id' => 'JWP_APP_ID'
+  ]
+]));
+```
+
+Si la connexion doit être refusée, retournez un objet JSON de la forme `{ "status": "error" }`.
+
+Après l'appel à `jwp.connect`, vous pouvez utiliser `jwp.channel` pour vous connecter à un canal. Vous pouvez le faire autant de fois que vous le désirez.
+
+```js
+// Connexion à un canal et défintion de quelques callbacks pour les événéments "new-message" et "buzz".
+var channel = socket.channel("lobby", jwp.fetchParams('/jwp/authorize-channel.php'));
+```
+
+Là aussi, il faut gérer la requête POST qui arrive en Ajax sur `/jwp/authorize-channel.php`. C'est à vous de décider  si un utilisateur peut bien avoir accès au canal auquel il essaye de se connecter.
+
+```php
+$socketId = $_SESSION['user_id'];
+$jwp = new Jwp\Client(new Jwp\Auth('JWP_APP_ID', 'JWP_API_KEY', 'JWP_SECRET')); // On instancie le client JWP.
+$channel = $json['channel_name']; // Le nom du canal demandé.
+$options = [ // Les différentes options activées pour ce canal. Lisez bien la documentation.
+  'presence_track' => true, // Pour garder une liste des utilisateurs connectés à un canal.
+  'presence_diffs' => true, // Pour tenir à jour la liste des utilisateurs connectés à un canal.
+  'notify_joins' => true, // Pour envoyer une requête vers votre serveur quand un utilisateur rejoint un canal.
+  'notify_leaves' => true, // Pour envoyer une requête vers votre serveur quand un utilisateur quitte un canal.
+];
+$token = $jwp->authenticateChannel($socketID, $channel, [], $options);
+
+exit(json_encode([
+  'status' => 'ok',
+  'data' => [
+    'auth' => $token,
+    'channel_name' => 'JWP_APP_ID'
+  ]
+]));
+```
+
+L'appel à `jwp.channel` retourne un objet que vous pouvez utiliser pour vous abonner aux événements et définir un callback pour y réagir.
+
+```js
+channel.join();
+channel.on("new-message", function(data) { appendMessage(data.message, data.username); });
+channel.on("buzz", function(data) { playSound("buzz.mp3"); });
+```
+
+Ce code sert à définir quoi faire quand un événément est envoyé sur le canal. Vous pouvez ouvrir autant de canaux et vous abonner à autant d'événements que vous souhaitez.
+
+Vous pouvez par exemple avoir un canal réservé à votre utilisateur. Un usage fréquent est de nommer ce canal `user:USER_ID`.
+
+Enfin, pour envoyer des données depuis votre application PHP :
+
+```php
+$jwp = new Jwp\Client(new Jwp\Auth('JWP_APP_ID', 'JWP_API_KEY', 'JWP_SECRET'));
+$jwp->push("lobby", 'new-message', [ 'message' => $message, 'username' => $username ]);
+```
+
+
 ## Liens utiles
 
 * [jwp-server](https://github.com/JeuWeb/jwp-server) : le serveur lui-même
