@@ -1,5 +1,5 @@
 defmodule Jwp.Auth.SocketAuth do
-  @socket_token_max_age_sec 3600
+  @socket_token_max_age_sec 60
 
   # We receive a token like this: "5e9f49be04150:1587499313:1827D01F4EDA2EF16E752FA13A98AC1691256A751C34FCC1423DD7865E353B35"
   # which is <socket_id>:<expiration_time>:<signature>.
