@@ -18,7 +18,7 @@ defmodule JwpWeb.ConsoleLive do
       |> assign(:last_message, nil)
       |> fecth_active_channels()
 
-    {:ok, socket}
+    {:ok, socket, temporary_assigns: [last_message: nil]}
   end
 
   def handle_info(%Broadcast{event: event}, socket)
