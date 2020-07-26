@@ -79,7 +79,37 @@ defmodule JwpWeb.MultiTenantSocket do
     {JwpWeb.MainChannel, []}
   end
 
+
+  # @todo """
+  # All app ids should have a fixed length and be numerical. Once it is ok, 
+  # we can remove this pad_id/1 function.
+  # """
+
+
+
+  # defp pad_id(app_id) when byte_size(app_id) < @app_id_length do
+  #   size = byte_size(app_id)
+  #   pad_length = @app_id_length - size
+
+  #   # We will use the "0" character representation to pad the
+  #   pad =
+  #     @app_id_pad
+  #     |> List.duplicate(pad_length)
+  #     |> :binary.list_to_bin()
+
+  #   <<pad::binary-size(pad_length), app_id::binary>>
+  # end
+
+  # defp pad_id(app_id) when byte_size(app_id) == @app_id_length do
+  #   app_id
+  # end
+
+  # defp pad_id(app_id) when byte_size(app_id) > @app_id_length do
+  #   raise ArgumentError, "bad app id size"
+  # end
+
   def connect(%{"app_id" => claim_app_id, "auth" => token}, socket, _) do
+    
     case Jwp.Auth.SocketAuth.verify_socket_token(claim_app_id, token) do
       {:ok, socket_id} ->
         socket =
@@ -119,12 +149,13 @@ defmodule JwpWeb.MultiTenantSocket.Serializer do
 
   @impl true
   def fastlane!(%Broadcast{} = msg) do
+    %{event: event, topic: topic} = msg
     data =
       Phoenix.json_library().encode_to_iodata!([
         nil,
         nil,
-        remove_app_prefix(msg.topic),
-        msg.event,
+        remove_app_prefix(topic, event),
+        event,
         msg.payload
       ])
 
@@ -139,7 +170,7 @@ defmodule JwpWeb.MultiTenantSocket.Serializer do
       [
         reply.join_ref,
         reply.ref,
-        remove_app_prefix(reply.topic),
+        remove_app_prefix(reply.topic, "phx_reply"),
         "phx_reply",
         %{status: reply.status, response: reply.payload}
       ]
@@ -150,13 +181,13 @@ defmodule JwpWeb.MultiTenantSocket.Serializer do
 
   def encode!(%Message{} = msg) do
     IO.inspect(msg, label: "encode msg")
-
+    %{event: event, topic: topic} = msg
     data =
       [
         msg.join_ref,
         msg.ref,
-        remove_app_prefix(msg.topic),
-        msg.event,
+        remove_app_prefix(topic, event),
+        event,
         msg.payload
       ]
       |> IO.inspect(label: "=>")
@@ -177,12 +208,10 @@ defmodule JwpWeb.MultiTenantSocket.Serializer do
     # Pad the app_id to a fixed length. The app id is formed with 1-byte
     # characters so we actually mean fixed byte-length.
     # @todo use only numbers in app ids.
-    # app_id = pad_id(app_id)
-    # topic = app_id <> <<@app_id_sep>> <> topic
     topic =
       case {topic, event} do
         {"phoenix", "heartbeat"} -> topic
-        _ -> "jwp:#{app_id}:#{topic}"
+        _ -> app_id <> <<@app_id_sep>> <> topic
       end
 
     {:pre_decoded,
@@ -195,26 +224,16 @@ defmodule JwpWeb.MultiTenantSocket.Serializer do
      }}
   end
 
-  defp pad_id(app_id) when byte_size(app_id) < @app_id_length do
-    size = byte_size(app_id)
-    pad_length = @app_id_length - size
 
-    # We will use the "0" character representation to pad the
-    pad =
-      @app_id_pad
-      |> List.duplicate(pad_length)
-      |> :binary.list_to_bin()
-
-    <<pad::binary-size(pad_length), app_id::binary>>
-  end
-
-  defp pad_id(app_id) when byte_size(app_id) == @app_id_length do
-    app_id
-  end
-
-  defp pad_id(app_id) when byte_size(app_id) > @app_id_length do
-    raise ArgumentError, "bad app id size"
-  end
-
-  defp remove_app_prefix("jwp:dev:" <> x), do: x
+  @phx_events [
+    "heartbeat", "phx_close",
+    "phx_error",
+    "phx_join",
+    "phx_reply",
+    "phx_leave"
+  ]
+  
+  def remove_app_prefix(<<_::binary-size(@app_id_length), @app_id_sep, topic::binary>>, _event), do: topic
+  def remove_app_prefix("phoenix", event) when event in @phx_events, do: "phoenix"
+  def remove_app_prefix("phoenix", event), do: raise ArgumentError, "bad phoenix event: #{event}"
 end

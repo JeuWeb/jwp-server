@@ -5,7 +5,7 @@ defmodule JwpWeb.PushController do
   def push_message(conn, %{"channel" => channel, "event" => event, "payload" => payload}) do
     %{id: app_id} = Pow.Plug.current_user(conn)
 
-    channel = "jwp:#{app_id}:#{channel}"
+    channel = "#{app_id}:#{channel}"
 
     case JwpWeb.Endpoint.broadcast!(channel, event, payload) do
       :ok -> 

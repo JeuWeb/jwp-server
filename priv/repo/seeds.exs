@@ -11,7 +11,7 @@
 # and so on) as they will fail if something goes wrong.
 
 Jwp.Apps.create(%Jwp.Apps.App{
-  id: "dev",
+  id: "0000000dev",
   email: "dev@dev.dev",
   password: "$dev2020",
   api_key: "meXxp1xABjiy5skBF9ecnwDBePPqMeIL80hBgHaiHT54yroKKyVZFffb459jLFyi",

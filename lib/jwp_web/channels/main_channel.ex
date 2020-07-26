@@ -5,13 +5,17 @@ defmodule JwpWeb.MainChannel do
   import Jwp.PubSub.ChannelConfig, only: [cc: 0, cc: 1, cc: 2], warn: false
   alias Jwp.Auth.SocketAuth
 
+
+  @app_id_length JwpWeb.MultiTenantSocket.app_id_length()
+  @app_id_pad JwpWeb.MultiTenantSocket.app_id_pad()
+  @app_id_sep JwpWeb.MultiTenantSocket.app_id_sep()
+
   # We give the assigned socket_id of the socket to the verification
   # function. The remote client has computed a signature with a
   # socket_id for this channel. If the signature is valid, it means
   # that the token was actually issued for this socket_id.
-  def join("jwp:" <> scope = _channel, %{"auth" => token} = params, socket) do
-    with  {:ok, claim_app_id, short_topic} <- SocketAuth.decode_scope(scope),
-          :ok <- SocketAuth.check_app_id(socket, claim_app_id),
+  def join(<<claim_app_id::binary-size(@app_id_length), @app_id_sep, short_topic::binary>> = _channel, %{"auth" => token} = params, socket) do
+    with  :ok <- SocketAuth.check_app_id(socket, claim_app_id),
           {:ok, json_data} <- get_json_config(params),
           :ok <- SocketAuth.verify_channel_token(claim_app_id, socket.assigns.socket_id, short_topic, json_data, token),
           {:ok, config} <- parse_json_config(json_data) do
@@ -23,7 +27,7 @@ defmodule JwpWeb.MainChannel do
     else
       err ->
         Logger.error(inspect(err))
-        {:error, %{reason: "unauthorized"}}
+        {:error, %{reason: "unauthorized, #{inspect err}"}}
     end
   end
 

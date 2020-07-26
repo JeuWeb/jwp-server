@@ -54,18 +54,22 @@ defmodule Jwp.Auth.SocketAuth do
     end
   end
 
-  def decode_scope(scope) do
-    with {:ok, [claim_app_id, short_topic]} <- Jwp.Auth.SocketAuth.split(scope, 2) do
-      {:ok, claim_app_id, short_topic}
-    else
-      err -> {:error, {:bad_scope, err}}
-    end
+
+  @app_id_length JwpWeb.MultiTenantSocket.app_id_length
+  @app_id_sep JwpWeb.MultiTenantSocket.app_id_sep
+
+  def decode_scope(<<claim_app_id::binary-size(@app_id_length), @app_id_sep, short_topic::binary>>) do
+    {:ok, claim_app_id, short_topic}
+  end
+
+  def decode_scope(_) do
+    {:error, :malformed_topic}
   end
 
   def check_app_id(socket, claim_app_id) do
     case socket.assigns.app_id do
       ^claim_app_id -> :ok
-      _ -> {:error, :bad_app_id}
+      _ -> {:error, {:bad_app_id, expected: socket.assigns.app_id, claimed: claim_app_id}}
     end
   end
 
