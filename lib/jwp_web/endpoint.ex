@@ -11,7 +11,7 @@ defmodule JwpWeb.Endpoint do
   ]
 
   # Jwp Pub Sub
-  socket "/socket", JwpWeb.PubSubSocket,
+  socket "/socket", JwpWeb.MultiTenantSocket,
     websocket: true,
     longpoll: false
 

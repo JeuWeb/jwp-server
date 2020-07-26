@@ -1,6 +1,6 @@
 [
   import_deps: [:phoenix],
-  # inputs: ["*.{ex,exs}", "priv/*/seeds.exs", "{config,lib,test}/**/*.{ex,exs}"],
+  inputs: ["*.{ex,exs}", "priv/*/seeds.exs", "{config,lib,test}/**/*.{ex,exs}"],
   inputs: [],
   subdirectories: ["priv/*/migrations"]
 ]
