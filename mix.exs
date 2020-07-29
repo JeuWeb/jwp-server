@@ -46,11 +46,15 @@ defmodule Jwp.MixProject do
       {:uuid, "~> 1.1"},
       {:mojito, "~> 0.6.1", only: [:test]},
       {:httpoison, "~> 1.6"},
+      {:hashids, "~> 2.0"},
 
       # Dashboard
       {:phoenix_live_dashboard, "~> 0.2.0"},
       {:phoenix_live_view, ">= 0.0.0"},
       {:floki, ">= 0.0.0", only: :test},
+
+      # Docs
+      {:ex_doc, "~> 0.22", only: :dev, runtime: false},
 
       # Utils
       {:decompilerl, github: "niahoo/decompilerl", only: [:dev]}

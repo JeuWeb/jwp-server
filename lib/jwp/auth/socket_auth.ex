@@ -1,4 +1,6 @@
 defmodule Jwp.Auth.SocketAuth do
+  use Jwp.Settings
+
   @socket_token_max_age_sec 60
 
   # We receive a token like this: "5e9f49be04150:1587499313:1827D01F4EDA2EF16E752FA13A98AC1691256A751C34FCC1423DD7865E353B35"
@@ -54,9 +56,7 @@ defmodule Jwp.Auth.SocketAuth do
     end
   end
 
-
-  @app_id_length JwpWeb.MultiTenantSocket.app_id_length
-  @app_id_sep JwpWeb.MultiTenantSocket.app_id_sep
+  
 
   def decode_scope(<<claim_app_id::binary-size(@app_id_length), @app_id_sep, short_topic::binary>>) do
     {:ok, claim_app_id, short_topic}

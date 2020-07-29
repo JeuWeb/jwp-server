@@ -1,14 +1,10 @@
 defmodule JwpWeb.MainChannel do
   use JwpWeb, :channel
+  use Jwp.Settings
   alias JwpWeb.MainPresence, as: Presence
   require Logger
   import Jwp.PubSub.ChannelConfig, only: [cc: 0, cc: 1, cc: 2], warn: false
   alias Jwp.Auth.SocketAuth
-
-
-  @app_id_length JwpWeb.MultiTenantSocket.app_id_length()
-  @app_id_pad JwpWeb.MultiTenantSocket.app_id_pad()
-  @app_id_sep JwpWeb.MultiTenantSocket.app_id_sep()
 
   # We give the assigned socket_id of the socket to the verification
   # function. The remote client has computed a signature with a

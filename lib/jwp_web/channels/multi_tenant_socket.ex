@@ -1,15 +1,8 @@
 defmodule JwpWeb.MultiTenantSocket do
   # use Phoenix.Socket, log: :debug
+  use Jwp.Settings
   require Logger
   alias JwpWeb.MultiTenantSocket.Serializer
-
-  @app_id_length 10
-  @app_id_pad ?0
-  @app_id_sep ?:
-
-  def app_id_length(), do: @app_id_length
-  def app_id_pad(), do: @app_id_pad
-  def app_id_sep(), do: @app_id_sep
 
   # Using Phoenix.Socket
 
@@ -91,7 +84,7 @@ defmodule JwpWeb.MultiTenantSocket do
   #   size = byte_size(app_id)
   #   pad_length = @app_id_length - size
 
-  #   # We will use the "0" character representation to pad the
+  #   # We will use the "0" character representation to pad the app_id
   #   pad =
   #     @app_id_pad
   #     |> List.duplicate(pad_length)
@@ -139,11 +132,8 @@ defmodule JwpWeb.MultiTenantSocket do
 end
 
 defmodule JwpWeb.MultiTenantSocket.Serializer do
+  use Jwp.Settings
   @behaviour Phoenix.Socket.Serializer
-
-  @app_id_length JwpWeb.MultiTenantSocket.app_id_length()
-  @app_id_pad JwpWeb.MultiTenantSocket.app_id_pad()
-  @app_id_sep JwpWeb.MultiTenantSocket.app_id_sep()
 
   alias Phoenix.Socket.{Broadcast, Message, Reply}
 
@@ -211,7 +201,7 @@ defmodule JwpWeb.MultiTenantSocket.Serializer do
     topic =
       case {topic, event} do
         {"phoenix", "heartbeat"} -> topic
-        _ -> app_id <> <<@app_id_sep>> <> topic
+        _ -> <<app_id::binary, @app_id_sep, topic::binary>>
       end
 
     {:pre_decoded,
